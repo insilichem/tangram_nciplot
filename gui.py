@@ -50,7 +50,7 @@ class BlankDialog(ModelessDialog):
 
     def __init__(self, *args, **kwarg):
         # GUI init
-        self.title = 'Plum3 Blank Dialog'
+        self.title = 'Plume Blank Dialog'
         self.controller = None
 
         # Fire up
