@@ -20,8 +20,8 @@ at runtime. Normally, you will only need to edit:
 class BlankExtension(chimera.extension.EMO):
 
     def name(self):
-        # Always prefix with 'Plum3'
-        return 'Plum3 Blank'
+        # Always prefix with 'Plume'
+        return 'Plume Blank'
 
     def description(self):
         # Something short but meaningful
