@@ -17,15 +17,15 @@ at runtime. Normally, you will only need to edit:
 """
 
 # Edit the name 
-class BlankExtension(chimera.extension.EMO):
+class NCIPlotExtension(chimera.extension.EMO):
 
     def name(self):
         # Always prefix with 'Plume'
-        return 'Plume Blank'
+        return 'Plume NCIPlot'
 
     def description(self):
         # Something short but meaningful
-        return "Boilerplate code for new Chimera extensions"
+        return "Depict orbitals and QM interaction blobs with NCIPlot"
 
     def categories(self):
         # Don't touch
@@ -40,4 +40,4 @@ class BlankExtension(chimera.extension.EMO):
         self.module('gui').showUI()
 
 # Remember to edit the class name in this call!
-chimera.extension.manager.registerExtension(BlankExtension(__file__))
+chimera.extension.manager.registerExtension(NCIPlotExtension(__file__))

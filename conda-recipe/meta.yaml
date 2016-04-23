@@ -1,0 +1,23 @@
+package:
+  name: nciplot
+  version: git20160411
+
+source:
+  fn: nciplot-5febba56ac4d93b15115f1c9970c920d8e76c8e2.tar.gz
+  url: https://github.com/aoterodelaroza/nciplot/archive/5febba56ac4d93b15115f1c9970c920d8e76c8e2.tar.gz
+  md5: 563a492a4ba655e7dba95767ebf71f14
+
+# source:
+#   git_url: https://github.com/aoterodelaroza/nciplot.git
+#   git_rev: 5febba56ac4d93b15115f1c9970c920d8e76c8e2
+
+build:
+  number: 1
+
+requirements:
+  build:
+    - gcc
+
+about:
+  home: https://github.com/aoterodelaroza/nciplot
+  license: GPL

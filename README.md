@@ -1,1 +1,6 @@
-This a dummy extension that contains and lists all the necessary files to build a Chimera extension. It also encourages good practices to maintain in all the components of Plume. Please, read the docstrings and comments, and do the same for your developments!
+# Plume NCIPlot
+
+NCIPlot is a software developed by []() in University of XXX and designed to depict the interaction blobs of QM calculations. With this plugin, you can generate those blobs from your Chimera structures and display them on screen.
+
+# Dependencies
+You need to download NCIPlot from []() and configure Plume NCIPlot so it can find the location where you extracted the files.
