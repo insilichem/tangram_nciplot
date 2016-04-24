@@ -36,10 +36,10 @@ class Controller(object):
 
     def __init__(self, gui=None, nciplot_binary=None, nciplot_dat=None, *args, **kwargs):
         self.gui = gui
-        self.nciplot = NCIPlot(nciplot_binary, nciplot_dat, callback=self._after_cb)
+        self.nciplot = NCIPlot(nciplot_binary, nciplot_dat, success_callback=self._after_cb,
+            clear_callback=self.gui._run_nciplot_clear_cb)
         self.data = {}
         self.surface, self.density = None, None
-        chimera._nciplot = self
 
     def run(self, atoms=None):
         """
@@ -61,7 +61,7 @@ class Controller(object):
         self.isosurface()
         self.update_surface()
         self.colorize_by_volume()
-        self.gui._after_run_nciplot()
+        self.gui._run_nciplot_cb()
 
     def draw(self):
         """
@@ -211,12 +211,13 @@ class NCIPlot(object):
     A wrapper around NCIPlot binary interface
     """
 
-    def __init__(self, binary, dat_directory, callback=None):
+    def __init__(self, binary, dat_directory, success_callback=None, clear_callback=None):
         self._check_paths(binary, dat_directory)
         self.binary = binary
         self.dat_directory = dat_directory
         os.environ['NCIPLOT_HOME'] = os.path.dirname(self.dat_directory)
-        self.callback = callback
+        self.success_callback = success_callback
+        self.clear_callback = clear_callback
         self.task = None
         self.subprocess = None
         self.stdout = None
@@ -282,16 +283,18 @@ class NCIPlot(object):
         """
         if aborted:
             self._clear_task()
+            self.clear_callback()
             return
         if self.subprocess.returncode != 0:
             self.task.updateStatus("NCIPlot calculation failed!")
             self._clear_task()
+            self.clear_callback()
             return
 
         self.task.updateStatus("Parsing NCIPlot output")
         data = self.parse_stdout(self.subprocess.stdout)
         self.task.updateStatus("Loading volumes")
-        self.callback(data)
+        self.success_callback(data)
         self.task.updateStatus("Done!")
         self._clear_task()
 
