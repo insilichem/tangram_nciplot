@@ -18,7 +18,7 @@ from SurfaceColor import Volume_Color, Gradient_Color, standard_color_palettes, 
 import numpy as np
 from matplotlib import pyplot as plt
 # Own
-
+standard_color_palettes['nciplot'] = ((0,0,1,1), (0,1,0,1), (1,0,0,1))
 
 """
 This module contains the business logic of your extension. Normally, it should
@@ -59,8 +59,10 @@ class Controller(object):
         self.data = data
         self.surface, self.density = self.draw()
         self.isosurface()
+        self.smoothen()
         self.update_surface()
         self.colorize_by_volume()
+        self.update_surface()
         self.gui._run_nciplot_cb()
 
     def draw(self):
@@ -103,7 +105,7 @@ class Controller(object):
         surface.surface_colors = surface.surface_colors[0], rgba
         surface.show()
 
-    def colorize_by_volume(self, surface=None, volume=None, mask=None, palette='rainbow'):
+    def colorize_by_volume(self, surface=None, volume=None, mask=None, palette='nciplot'):
         """
         Apply color to a surface taking the rgb values from an opened volume.
 
@@ -116,7 +118,7 @@ class Controller(object):
         mask : 'volume' or 'gradient'
             Interpretation of `volume` data. It can be either the raw volume data,
             or the data extracted from the gradient norms.
-        palette : str, default='rainbow'
+        palette : str, default='nciplot'
             Colors that will be used to paint `surface`. Check 
             `SurfaceColor.standard_color_palettes.keys()` for available palettes.
         """
@@ -136,11 +138,11 @@ class Controller(object):
         if None in values_range:
             print('Warning: Selected molecule has no value range. Coloring will be omitted.')
         else:
-            palette = standard_color_palettes.get(palette, standard_color_palettes['rainbow'])
+            palette = standard_color_palettes.get(palette, standard_color_palettes['nciplot'])
             values = interpolate_range_into_n_values(values_range, len(palette))
-            color_by_volume(surface, volume, list(values), palette)
+            color_by_volume(surface, volume, list(values), palette, auto_update=True)
 
-    def isosurface(self, surface=None, level_1=0.08, level_2=0.25):
+    def isosurface(self, surface=None, level_1=0.07, level_2=0.3):
         """
         Change the cutoffs that define the isosurface extracted from the opened
         volume.
@@ -156,19 +158,41 @@ class Controller(object):
             surface = self.surface
         surface.surface_levels = level_1, level_2
 
-    def plot(self):
+    def smoothen(self, surface=None, step=1):
+        """
+        Smoothening factor of the surface. Best is 1, worst is 8.
+
+        Parameters
+        ----------
+        surface : VolumeViewer.volume
+            The volume whose isosurface will be edited
+        step : int, optional, default=1
+            Smoothening factor. Must be 1, 2, 4, or 8.
+        """
+        if surface is None:
+            surface = self.surface
+        if step not in (1, 2, 4, 8):
+            return
+
+        ijk_step = [step] * 3
+        if surface.region is None or (ijk_step) == tuple(surface.region[2]) :
+            return
+
+        ijk_min, ijk_max = surface.region[:2]
+        surface.new_region(ijk_min, ijk_max, ijk_step, adjust_step=False, show=False)
+
+    def plot(self, figure):
         """
         Read on Matplotlib TK dialogs
         """
         try:
-            xy = np.loadtxt(self.data['xy_data'])
+            xy = np.loadtxt(self.data['xy_data'][:-3] + 'dat')
         except IOError:
             raise UserError('DAT file is missing. Please, run NCIPlot again.')
         except KeyError:
             raise UserError('NCIPlot has not been run yet!')
         else:
-            xy_plot = plt.scatter(xy[:, 0], xy[:, 1])
-            xy_plot.show()
+            return figure.hexbin(xy[:, 0], xy[:, 1], gridsize=250, bins='log', mincnt=1)
 
     def update_surface(self):
         """
@@ -311,6 +335,7 @@ class NCIPlot(object):
         Get useful data from NCIPlot stdout, or any file-like object.
         """
         data = {}
+        data['_raw'] = []
         for line in stdout:
             if line.startswith('#') or line.startswith('---'):
                 continue
@@ -324,6 +349,7 @@ class NCIPlot(object):
                 data['dens_cube'] = line.split('=')[-1].strip()
             elif 'LS x RDG' in line:
                 data['xy_data'] = line.split('=')[-1].strip()
+            data['_raw'].append(line)
         return data
 
     @staticmethod

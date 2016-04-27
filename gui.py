@@ -10,8 +10,14 @@ import chimera
 from chimera.baseDialog import ModelessDialog, ModalDialog
 from chimera.widgets import ModelScrolledListBox
 from Pmw import OptionMenu
+from CGLtk.Hybrid import Checkbutton
+from SurfaceColor import surface_value_at_window_position
 # Additional 3rd parties
-
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from matplotlib.widgets import Cursor 
 # Own
 from core import Controller, standard_color_palettes
 import prefs
@@ -56,7 +62,7 @@ class NCIPlotDialog(ModelessDialog):
     def __init__(self, *args, **kwarg):
         # GUI init
         self.title = 'Plume NCIPlot'
-
+        self._mouse_report_binding = None
         # Fire up
         ModelessDialog.__init__(self, resizable=False)
         chimera.extension.manager.registerInstance(self)
@@ -92,7 +98,8 @@ class NCIPlotDialog(ModelessDialog):
         # Mode A: Opened molecules
         self.input_frame = tk.Frame(self.input_frame)
         self.input_frame.pack(expand=True, fill='x')
-        self.input_molecules = ModelScrolledListBox(self.input_frame, selectioncommand=None,
+        self.input_molecules = ModelScrolledListBox(self.input_frame, 
+                                                    selectioncommand=self._on_selection_changed,
                                                     filtFunc=lambda m: isinstance(
                                                         m, chimera.Molecule),
                                                     listbox_selectmode="extended")
@@ -119,20 +126,45 @@ class NCIPlotDialog(ModelessDialog):
 
         # Configure Volume Viewer
         self.settings_frame = tk.LabelFrame(self.canvas, text='Customize display', padx=5, pady=5)
-        self.settings_frame.pack()
         tk.Label(self.settings_frame, text='Levels: ').grid(row=0, column=0)
         self.settings_isovalue_1, self.settings_isovalue_2 = tk.StringVar(), tk.StringVar()
-        self.settings_isovalue_1.set('0.08')
-        self.settings_isovalue_2.set('0.25')
-        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_1, width=10).grid(row=0, column=1, sticky='ew')
-        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_2, width=10).grid(row=0, column=2, sticky='ew')
+        self.settings_isovalue_1.set('')
+        self.settings_isovalue_2.set('')
+        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_1,
+                 width=10).grid(row=0, column=1, sticky='ew')
+        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_2,
+                 width=10).grid(row=0, column=2, sticky='ew')
+        tk.Button(self.settings_frame, text='Update',
+                  command=self._update_surface).grid(row=0, column=3, rowspan=2, sticky='news')
 
-        self.settings_color_palette = OptionMenu(self.settings_frame, initialitem=3, 
+        self.settings_color_palette = OptionMenu(self.settings_frame, initialitem=3,
                                                  label_text='Colors: ', labelpos='w',
                                                  items=sorted(standard_color_palettes.keys()))
         self.settings_color_palette.grid(row=1, column=0, columnspan=3, sticky='we')
-        tk.Button(self.settings_frame, text='Update', command=self._update_surface,
-                  height=3).grid(row=0, rowspan=2, column=3)
+        
+        self.settings_report = tk.IntVar()
+        tk.Checkbutton(self.settings_frame, text='Report value at cursor position', 
+                       command=self._report_values_cb,
+                       variable=self.settings_report).grid(row=2, column=0, columnspan=3)
+        self.reported_value = tk.StringVar()
+        tk.Entry(self.settings_frame, textvariable=self.reported_value,
+                 state='readonly', width=8).grid(row=2, column=3, sticky='we')
+        
+        # Plot figure
+        self.plot_frame = tk.LabelFrame(self.canvas, text='Plot density vs RDG', padx=5, pady=5)
+        self.plot_button = tk.Button(self.plot_frame, text='Plot', command=self._plot)
+        self.plot_button.grid(row=0)
+        self.plot_figure = Figure(figsize=(5,5), dpi=100, facecolor='#D9D9D9')
+        self.plot_subplot = self.plot_figure.add_subplot(111)
+
+        self.plot_widget_frame = tk.Frame(self.plot_frame)
+        self.plot_widget_frame.grid(row=1)
+        self.plot_widget = FigureCanvasTkAgg(self.plot_figure, master=self.plot_widget_frame)
+        # self.plot_cursor = Cursor(self.plot_subplot, useblit=True, color='black', linewidth=1)
+        # self.plot_figure.canvas.mpl_connect('button_press_event', self._on_plot_click)
+
+        # Register and map triggers, callbacks...
+        chimera.triggers.addHandler('selection changed', self._on_selection_changed, None)
 
     def Apply(self):
         """
@@ -169,23 +201,10 @@ class NCIPlotDialog(ModelessDialog):
         elif self.input_choice.get() == 'selection':
             self.input_molecules.pack_forget()
             self.input_named_selections.pack(expand=True, fill='x', padx=5)
+        self._on_selection_changed()
 
     def _validate_input_data(self, *args):
-        atoms = None
-        if self.input_choice.get() == 'molecules':
-            molecules = self.input_molecules.getvalue()
-            atoms = [a for m in molecules for a in m.atoms]
-        elif self.input_choice.get() == 'selection':
-            atoms = chimera.selection.currentAtoms()
-
-        if not atoms:
-            self.input_summary.set('No atoms selected!')
-            self.input_summary_label.configure(foreground='red')
-            raise chimera.UserError('Please, select at least a molecule or atom.')
-
-        self.input_summary.set('Your selection contains {} atoms'.format(len(atoms)))
-        self.input_summary_label.configure(foreground='black')
-
+        atoms = self._on_selection_changed()
         return atoms
 
     def _configure_dialog(self, *args):
@@ -195,31 +214,87 @@ class NCIPlotDialog(ModelessDialog):
     def _run_nciplot(self, *args):
         self._run_nciplot_clear_cb()
         atoms = self._validate_input_data()
-        self.controller = self.load_controller()
-        self.controller.run(atoms=atoms)
-        self.nciplot_run.configure(state='disabled', text='Running...')
-        self.settings_frame.pack_forget()
+        print(atoms)
+        if atoms:
+            self.controller = self.load_controller()
+            self.controller.run(atoms=atoms)
+            self.nciplot_run.configure(state='disabled', text='Running...')
+            self.settings_frame.pack_forget()
 
     def _run_nciplot_cb(self):
         self.nciplot_run.configure(state='normal', text='Run')
+        self.settings_isovalue_1.set(self.controller.surface.surface_levels[0])
+        self.settings_isovalue_2.set(self.controller.surface.surface_levels[1])
         self.settings_frame.pack()
-    
+        self.plot_frame.pack(expand=True, fill='both')
+
     def _run_nciplot_clear_cb(self):
         self.nciplot_run.configure(state='normal', text='Run')
+        self.plot_button.configure(state='normal')
         self.settings_frame.pack_forget()
+        self.settings_isovalue_1.set('')
+        self.settings_isovalue_2.set('')
+        self.plot_frame.pack_forget()
+        self.plot_widget.get_tk_widget().pack_forget()
         self.controller = None
 
     def _update_surface(self):
-        # Colors
-        palette = self.settings_color_palette.getvalue()
-        self.controller.colorize_by_volume(palette=palette)
         # Levels
         isovalue_1 = float(self.settings_isovalue_1.get())
         isovalue_2 = float(self.settings_isovalue_2.get())
         self.controller.isosurface(level_1=isovalue_1, level_2=isovalue_2)
         # Update view
         self.controller.update_surface()
+        # Colors
+        palette = self.settings_color_palette.getvalue()
+        self.controller.colorize_by_volume(palette=palette)
+        # Update view
+        self.controller.update_surface()
 
+    def _plot(self):
+        self.controller.plot(self.plot_subplot)
+        self.plot_widget.get_tk_widget().pack(expand=True, fill='both')
+        self.plot_subplot.set_xlabel('Density')
+        self.plot_subplot.set_ylabel('RDG')
+
+        self.plot_widget.show()
+        self.plot_button.configure(state='disabled')
+
+    def _report_values_cb(self):
+        if self.settings_report.get() and self._mouse_report_binding is None:
+            self._mouse_report_binding = chimera.tkgui.app.graphics.bind('<Any-Motion>', 
+                                            self._report_values_event, add=True)
+
+    def _report_values_event(self, event):
+        if self.settings_report.get() and self.isVisible():
+            vpn = surface_value_at_window_position(event.x, event.y)
+            if vpn is None:
+                self.reported_value.set('')
+            else:
+                value, position, name = vpn
+                self.reported_value.set('{:8.5g}'.format(float(value)))
+                chimera.replyobj.status('{} at cursor: {:8.5g}'.format(name, float(value)))
+
+    def _on_plot_click(self, event):
+        if event.button == 1:
+            self.settings_isovalue_1.set(round(event.xdata, 2))
+        elif event.button == 3:
+            self.settings_isovalue_2.set(round(event.xdata, 2))
+
+    def _on_selection_changed(self, *args):
+        atoms = []
+        if self.input_choice.get() == 'selection':
+            atoms = chimera.selection.currentAtoms()
+        elif self.input_choice.get() == 'molecules':
+            molecules = self.input_molecules.getvalue()
+            atoms = [a for m in molecules for a in m.atoms]
+        
+        color, state = ('black', 'normal') if atoms else ('red', 'disabled')
+        self.nciplot_run.configure(state=state) 
+        self.input_summary_label.configure(foreground=color)
+        self.input_summary.set('{} selected atoms'.format(len(atoms)))
+
+        return atoms
 
 class NCIPlotConfigureDialog(ModalDialog):
 
@@ -264,3 +339,4 @@ class NCIPlotConfigureDialog(ModalDialog):
 
     def Close(self):
         self.destroy()
+
