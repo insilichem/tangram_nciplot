@@ -10,14 +10,12 @@ import chimera
 from chimera.baseDialog import ModelessDialog, ModalDialog
 from chimera.widgets import ModelScrolledListBox
 from Pmw import OptionMenu
-from CGLtk.Hybrid import Checkbutton
 from SurfaceColor import surface_value_at_window_position
 # Additional 3rd parties
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from matplotlib.widgets import Cursor 
 # Own
 from core import Controller, standard_color_palettes
 import prefs
@@ -195,6 +193,9 @@ class NCIPlotDialog(ModelessDialog):
 
     # All the callbacks
     def _input_choice_cb(self):
+        """
+        Change input mode
+        """
         if self.input_choice.get() == 'molecules':
             self.input_molecules.pack(expand=True, fill='x', padx=5)
             self.input_named_selections.pack_forget()
@@ -212,9 +213,11 @@ class NCIPlotDialog(ModelessDialog):
         dialog.enter()
 
     def _run_nciplot(self, *args):
+        """
+        Called at clicking 'Run' button.
+        """
         self._run_nciplot_clear_cb()
         atoms = self._validate_input_data()
-        print(atoms)
         if atoms:
             self.controller = self.load_controller()
             self.controller.run(atoms=atoms)
@@ -222,6 +225,9 @@ class NCIPlotDialog(ModelessDialog):
             self.settings_frame.pack_forget()
 
     def _run_nciplot_cb(self):
+        """
+        Called after NCIPlot has successfully run
+        """
         self.nciplot_run.configure(state='normal', text='Run')
         self.settings_isovalue_1.set(self.controller.surface.surface_levels[0])
         self.settings_isovalue_2.set(self.controller.surface.surface_levels[1])
@@ -229,6 +235,9 @@ class NCIPlotDialog(ModelessDialog):
         self.plot_frame.pack(expand=True, fill='both')
 
     def _run_nciplot_clear_cb(self):
+        """
+        Housecleaning method. Resets everything to original state
+        """
         self.nciplot_run.configure(state='normal', text='Run')
         self.plot_button.configure(state='normal')
         self.settings_frame.pack_forget()
@@ -239,6 +248,9 @@ class NCIPlotDialog(ModelessDialog):
         self.controller = None
 
     def _update_surface(self):
+        """
+        Gets GUI options, sets them and updates the surface
+        """
         # Levels
         isovalue_1 = float(self.settings_isovalue_1.get())
         isovalue_2 = float(self.settings_isovalue_2.get())
@@ -252,20 +264,26 @@ class NCIPlotDialog(ModelessDialog):
         self.controller.update_surface()
 
     def _plot(self):
+        """
+        Draw density vs rdg with a hexbin
+        """
         self.controller.plot(self.plot_subplot)
         self.plot_widget.get_tk_widget().pack(expand=True, fill='both')
-        self.plot_subplot.set_xlabel('Density')
-        self.plot_subplot.set_ylabel('RDG')
-
         self.plot_widget.show()
         self.plot_button.configure(state='disabled')
 
     def _report_values_cb(self):
+        """
+        Binds mouse mouse callbacks to mouse movement events
+        """
         if self.settings_report.get() and self._mouse_report_binding is None:
             self._mouse_report_binding = chimera.tkgui.app.graphics.bind('<Any-Motion>', 
                                             self._report_values_event, add=True)
 
     def _report_values_event(self, event):
+        """
+        Report value of isosurface at cursor point
+        """
         if self.settings_report.get() and self.isVisible():
             vpn = surface_value_at_window_position(event.x, event.y)
             if vpn is None:
@@ -276,12 +294,20 @@ class NCIPlotDialog(ModelessDialog):
                 chimera.replyobj.status('{} at cursor: {:8.5g}'.format(name, float(value)))
 
     def _on_plot_click(self, event):
+        """
+        Callback that sets isosurface values from plot X axis data.
+        Left click sets isovalue 1, right click sets isovalue 2
+        """
         if event.button == 1:
             self.settings_isovalue_1.set(round(event.xdata, 2))
         elif event.button == 3:
             self.settings_isovalue_2.set(round(event.xdata, 2))
 
     def _on_selection_changed(self, *args):
+        """
+        Test if current selection is valid for running a new calculation,
+        reports number of atoms
+        """
         atoms = []
         if self.input_choice.get() == 'selection':
             atoms = chimera.selection.currentAtoms()
@@ -293,7 +319,6 @@ class NCIPlotDialog(ModelessDialog):
         self.nciplot_run.configure(state=state) 
         self.input_summary_label.configure(foreground=color)
         self.input_summary.set('{} selected atoms'.format(len(atoms)))
-
         return atoms
 
 class NCIPlotConfigureDialog(ModalDialog):

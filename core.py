@@ -16,7 +16,6 @@ from VolumeViewer import open_volume_file
 from SurfaceColor import Volume_Color, Gradient_Color, standard_color_palettes, color_by_volume
 # Additional 3rd parties
 import numpy as np
-from matplotlib import pyplot as plt
 # Own
 standard_color_palettes['nciplot'] = ((0,0,1,1), (0,1,0,1), (1,0,0,1))
 
@@ -50,7 +49,7 @@ class Controller(object):
             xyz = [atoms2xyz(atoms)]
         else:
             xyz = [molecule2xyz(m) for m in self.selected_molecules]
-        self.nciplot.run(*xyz, **self.nci_options)
+        self.nciplot.run(*xyz)
 
     def _after_cb(self, data):
         """
@@ -183,7 +182,7 @@ class Controller(object):
 
     def plot(self, figure):
         """
-        Read on Matplotlib TK dialogs
+        Plot density vs rdg in a hexbin plot.
         """
         try:
             xy = np.loadtxt(self.data['xy_data'][:-3] + 'dat')
@@ -192,7 +191,9 @@ class Controller(object):
         except KeyError:
             raise UserError('NCIPlot has not been run yet!')
         else:
-            return figure.hexbin(xy[:, 0], xy[:, 1], gridsize=250, bins='log', mincnt=1)
+            figure.hexbin(xy[:, 0], xy[:, 1], gridsize=250, bins='log', mincnt=1)
+            figure.set_xlabel('Density')
+            figure.set_ylabel('RDG')
 
     def update_surface(self):
         """
@@ -200,18 +201,6 @@ class Controller(object):
         """
         if self.surface is not None:
             self.surface.show()
-
-    @property
-    def nci_options(self):
-        """
-        Get GUI options in a dictionary
-        """
-        options = {}
-        options['names'] = [m.name for m in self.selected_molecules]
-        # if self.gui.radius_search:
-        #     options['radius'] = origin, radius = None
-        # More to come...
-        return options
 
     @property
     def selected_molecules(self):
@@ -294,10 +283,10 @@ class NCIPlot(object):
         nci_file = osTemporaryFile(suffix='.nci')
         with open(nci_file, 'w') as f:
             f.write(nci_input.read())
-        names = ', '.join(options.get('names', ['<unknown>']))
+        name = ', '.join(os.path.basename(f) for f in xyz)
 
-        self.task = Task("NCIPlot for {}".format(names), cancelCB=self._clear_task)
-        self.subprocess = Popen([self.binary, nci_file], stdout=PIPE)
+        self.task = Task("NCIPlot for {}".format(name), cancelCB=self._clear_task)
+        self.subprocess = Popen([self.binary, nci_file], stdout=PIPE, progressCB= lambda p: 0)
         monitor("NCIPlot", self.subprocess, task=self.task, afterCB=self._after_cb)
         self.task.updateStatus("Running NCIPlot")
 
@@ -314,7 +303,6 @@ class NCIPlot(object):
             self._clear_task()
             self.clear_callback()
             return
-
         self.task.updateStatus("Parsing NCIPlot output")
         data = self.parse_stdout(self.subprocess.stdout)
         self.task.updateStatus("Loading volumes")
@@ -469,7 +457,8 @@ def molecule2xyz(molecule, path=None):
         Desired output location. If not provided, a temporary one will be used.
     """
     if not path:
-        path = osTemporaryFile(suffix='.xyz')
+        prefix = '{}__'.format(molecule.name)
+        path = osTemporaryFile(prefix=prefix, suffix='.xyz')
     with open(path, 'w') as f:
         f.write('{}\n{}\n'.format(len(molecule.atoms), molecule.name))
         for atom in molecule.atoms:
@@ -487,7 +476,8 @@ def atoms2xyz(atoms, path=None):
         Desired output location. If not provided, a temporary one will be used.
     """
     if not path:
-        path = osTemporaryFile(suffix='.xyz')
+        prefix = '{}__'.format('-'.join(set(a.molecule.name for a in atoms)))
+        path = osTemporaryFile(prefix=prefix, suffix='.xyz')
     with open(path, 'w') as f:
         f.write('{}\n{}\n'.format(len(atoms), atoms[0].molecule.name))
         for atom in atoms:
