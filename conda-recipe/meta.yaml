@@ -16,7 +16,9 @@ build:
 
 requirements:
   build:
-    - gcc
+    - gcc       # [unix]
+    - mingwpy   # [win]
+    - unxutils  # [win]
 
 about:
   home: https://github.com/aoterodelaroza/nciplot

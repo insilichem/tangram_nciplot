@@ -1,6 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cd "${SRC_DIR}/src"
+# Patch in Mac
+if [ "$(uname -s)" == "Darwin" ]; then
+    mv Makefile Makefile.bak
+    sed -e "s/\(@mkdir.*\)/# \1/" -e "s/\(ln.*\)/# \1/g" Makefile.bak > Makefile
+fi
 # Compile nciplot with gfortran
 make mrproper
 make
