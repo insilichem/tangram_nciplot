@@ -13,7 +13,8 @@ from Pmw import OptionMenu
 from SurfaceColor import surface_value_at_window_position
 # Additional 3rd parties
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use('TkAgg')
+matplotlib.rc('text', usetex=False)
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 # Own
@@ -141,7 +142,7 @@ class NCIPlotDialog(ModelessDialog):
         self.settings_color_palette.grid(row=1, column=0, columnspan=3, sticky='we')
         
         self.settings_report = tk.IntVar()
-        tk.Checkbutton(self.settings_frame, text='Report value at cursor position', 
+        tk.Checkbutton(self.settings_frame, text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor', 
                        command=self._report_values_cb,
                        variable=self.settings_report).grid(row=2, column=0, columnspan=3)
         self.reported_value = tk.StringVar()
@@ -149,7 +150,8 @@ class NCIPlotDialog(ModelessDialog):
                  state='readonly', width=8).grid(row=2, column=3, sticky='we')
         
         # Plot figure
-        self.plot_frame = tk.LabelFrame(self.canvas, text='Plot density vs RDG', padx=5, pady=5)
+        self.plot_frame = tk.LabelFrame(self.canvas, text=u'Plot density (\u03BB\u2082\u22C5\u03C1) vs RDG',
+                                        padx=5, pady=5)
         self.plot_button = tk.Button(self.plot_frame, text='Plot', command=self._plot)
         self.plot_button.grid(row=0)
         self.plot_figure = Figure(figsize=(5,5), dpi=100, facecolor='#D9D9D9')
