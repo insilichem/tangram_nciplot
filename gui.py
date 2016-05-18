@@ -5,6 +5,8 @@
 from __future__ import print_function, division
 # Python stdlib
 import Tkinter as tk
+from itertools import groupby
+from operator import attrgetter
 # Chimera stuff
 import chimera
 from chimera.baseDialog import ModelessDialog, ModalDialog
@@ -14,7 +16,7 @@ from SurfaceColor import surface_value_at_window_position
 # Additional 3rd parties
 import matplotlib
 matplotlib.use('TkAgg')
-matplotlib.rc('text', usetex=False)
+matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 # Own
@@ -80,10 +82,10 @@ class NCIPlotDialog(ModelessDialog):
         # Select an input menu: Radio buttons
         self.input_frame = tk.LabelFrame(self.canvas, text='Input mode', padx=5, pady=5)
         self.input_frame.pack(expand=True, fill='x')
+        self.input_choice_frame = tk.Frame(self.input_frame)
+        self.input_choice_frame.grid(row=0)
         self.input_choice = tk.StringVar()
         self.input_choice.set('molecules')
-        self.input_choice_frame = tk.Frame(self.input_frame)
-        self.input_choice_frame.pack()
         self.input_choice_molecules = tk.Radiobutton(self.input_choice_frame, variable=self.input_choice,
                                                      text='Molecules', value='molecules',
                                                      command=self._input_choice_cb)
@@ -95,9 +97,9 @@ class NCIPlotDialog(ModelessDialog):
         self.input_choice_molecules.select()
 
         # Mode A: Opened molecules
-        self.input_frame = tk.Frame(self.input_frame)
-        self.input_frame.pack(expand=True, fill='x')
-        self.input_molecules = ModelScrolledListBox(self.input_frame, 
+        self.input_molecules_frame = tk.Frame(self.input_frame)
+        self.input_molecules_frame.grid(row=1)
+        self.input_molecules = ModelScrolledListBox(self.input_molecules_frame,
                                                     selectioncommand=self._on_selection_changed,
                                                     filtFunc=lambda m: isinstance(
                                                         m, chimera.Molecule),
@@ -106,14 +108,31 @@ class NCIPlotDialog(ModelessDialog):
 
         # Mode B: Current selection
         items = ['Current selection'] + sorted(chimera.selection.savedSels.keys())
-        self.input_named_selections = OptionMenu(self.input_frame, command=None, items=items)
+        self.input_named_selections = OptionMenu(self.input_molecules_frame, command=None, items=items)
         self.input_new_named_atom_selection = None  # Text field + 'Create button'
+
+        # More options
+        self.input_intermolecular_frame = tk.Frame(self.input_frame)
+        self.input_intermolecular_frame.grid(row=2)
+        self.input_intermolecular_enabled = tk.IntVar()
+        self.input_intermolecular_check = tk.Checkbutton(
+            self.input_intermolecular_frame, text='Filter out % of intramolecular',
+            variable=self.input_intermolecular_enabled,
+            command=self._intermolecular_cb, state='disabled')
+        self.input_intermolecular_check.pack(side='left')
+        self.input_intermolecular = tk.IntVar()
+        self.input_intermolecular.set(95)
+        self.input_intermolecular_field = tk.Entry(self.input_intermolecular_frame,
+                                                   textvariable=self.input_intermolecular,
+                                                   state='disabled', width=3)
+        self.input_intermolecular_field.pack(side='left')
 
         # Review input data
         self.input_summary = tk.StringVar()
         self.input_summary.set('Please select your input.')
         self.input_summary_label = tk.Label(self.input_frame, textvariable=self.input_summary)
-        self.input_summary_label.pack(side='bottom')
+        self.input_summary_label.grid(row=3)
+
 
         # NCIPlot launcher
         self.nciplot_frame = tk.Frame(self.canvas)
@@ -140,21 +159,21 @@ class NCIPlotDialog(ModelessDialog):
                                                  label_text='Colors: ', labelpos='w',
                                                  items=sorted(standard_color_palettes.keys()))
         self.settings_color_palette.grid(row=1, column=0, columnspan=3, sticky='we')
-        
+
         self.settings_report = tk.IntVar()
-        tk.Checkbutton(self.settings_frame, text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor', 
+        tk.Checkbutton(self.settings_frame, text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor',
                        command=self._report_values_cb,
                        variable=self.settings_report).grid(row=2, column=0, columnspan=3)
         self.reported_value = tk.StringVar()
         tk.Entry(self.settings_frame, textvariable=self.reported_value,
                  state='readonly', width=8).grid(row=2, column=3, sticky='we')
-        
+
         # Plot figure
-        self.plot_frame = tk.LabelFrame(self.canvas, text=u'Plot density (\u03BB\u2082\u22C5\u03C1) vs RDG',
+        self.plot_frame = tk.LabelFrame(self.canvas, text=u'Plot RDG vs density (\u03BB\u2082\u22C5\u03C1)',
                                         padx=5, pady=5)
         self.plot_button = tk.Button(self.plot_frame, text='Plot', command=self._plot)
         self.plot_button.grid(row=0)
-        self.plot_figure = Figure(figsize=(5,5), dpi=100, facecolor='#D9D9D9')
+        self.plot_figure = Figure(figsize=(5, 5), dpi=100, facecolor='#D9D9D9')
         self.plot_subplot = self.plot_figure.add_subplot(111)
 
         self.plot_widget_frame = tk.Frame(self.plot_frame)
@@ -193,6 +212,12 @@ class NCIPlotDialog(ModelessDialog):
         binary, dat = prefs.get_preferences()
         return Controller(gui=self, nciplot_binary=binary, nciplot_dat=dat)
 
+    def input_options(self):
+        d = {}
+        if self.input_intermolecular_enabled.get():
+            d['intermolecular'] = self.input_intermolecular.get() / 100.0
+        return d
+
     # All the callbacks
     def _input_choice_cb(self):
         """
@@ -205,6 +230,12 @@ class NCIPlotDialog(ModelessDialog):
             self.input_molecules.pack_forget()
             self.input_named_selections.pack(expand=True, fill='x', padx=5)
         self._on_selection_changed()
+
+    def _intermolecular_cb(self):
+        if self.input_intermolecular_enabled.get():
+            self.input_intermolecular_field.config(state='normal')
+        else:
+            self.input_intermolecular_field.config(state='disabled')
 
     def _validate_input_data(self, *args):
         atoms = self._on_selection_changed()
@@ -221,8 +252,11 @@ class NCIPlotDialog(ModelessDialog):
         self._run_nciplot_clear_cb()
         atoms = self._validate_input_data()
         if atoms:
+            attr_getter = attrgetter('molecule')
+            groups = [list(group) for k, group in groupby(atoms, key=attr_getter)]
+            options = self.input_options()
             self.controller = self.load_controller()
-            self.controller.run(atoms=atoms)
+            self.controller.run(groups=groups, **options)
             self.nciplot_run.configure(state='disabled', text='Running...')
             self.settings_frame.pack_forget()
 
@@ -279,8 +313,8 @@ class NCIPlotDialog(ModelessDialog):
         Binds mouse mouse callbacks to mouse movement events
         """
         if self.settings_report.get() and self._mouse_report_binding is None:
-            self._mouse_report_binding = chimera.tkgui.app.graphics.bind('<Any-Motion>', 
-                                            self._report_values_event, add=True)
+            self._mouse_report_binding = chimera.tkgui.app.graphics.bind('<Any-Motion>',
+                                                                         self._report_values_event, add=True)
 
     def _report_values_event(self, event):
         """
@@ -313,15 +347,27 @@ class NCIPlotDialog(ModelessDialog):
         atoms = []
         if self.input_choice.get() == 'selection':
             atoms = chimera.selection.currentAtoms()
+            molecules = chimera.selection.currentMolecules()
         elif self.input_choice.get() == 'molecules':
             molecules = self.input_molecules.getvalue()
             atoms = [a for m in molecules for a in m.atoms]
-        
+
         color, state = ('black', 'normal') if atoms else ('red', 'disabled')
-        self.nciplot_run.configure(state=state) 
+        self.nciplot_run.configure(state=state)
         self.input_summary_label.configure(foreground=color)
         self.input_summary.set('{} selected atoms'.format(len(atoms)))
+
+
+        if len(molecules) > 1:
+            self.input_intermolecular_check.config(state='normal')
+            self.input_intermolecular_check.select()
+        else:
+            self.input_intermolecular_check.config(state='disabled')
+            self.input_intermolecular_check.deselect()
+        self._intermolecular_cb()
+        
         return atoms
+
 
 class NCIPlotConfigureDialog(ModalDialog):
 
@@ -366,4 +412,3 @@ class NCIPlotConfigureDialog(ModalDialog):
 
     def Close(self):
         self.destroy()
-

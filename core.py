@@ -40,16 +40,18 @@ class Controller(object):
         self.data = {}
         self.surface, self.density = None, None
 
-    def run(self, atoms=None):
+    def run(self, atoms=None, groups=None, **options):
         """
         Convert selected molecules to temporary xyz files, launch NCIPlot
         and draw the resulting volumetric information
         """
         if atoms:
             xyz = [atoms2xyz(atoms)]
+        elif groups:
+            xyz = [atoms2xyz(group) for group in groups]
         else:
             xyz = [molecule2xyz(m) for m in self.selected_molecules]
-        self.nciplot.run(*xyz)
+        self.nciplot.run(*xyz, **options)
 
     def _after_cb(self, data):
         """
