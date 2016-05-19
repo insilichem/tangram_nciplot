@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 # Python stdlib
 import Tkinter as tk
+import tkFileDialog
 from itertools import groupby
 from operator import attrgetter
 # Chimera stuff
@@ -384,20 +385,20 @@ class NCIPlotConfigureDialog(ModalDialog):
         ModalDialog.__init__(self, resizable=False)
 
     def fillInUI(self, parent):
-
+        self.parent = parent
         tk.Label(parent, text='NCIPlot program').grid(row=0)
         tk.Label(parent, text='NCIPlot dat path').grid(row=1)
 
         self.bin_entry = tk.Entry(parent, textvariable=self.binary)
         self.bin_entry.grid(row=0, column=1)
         self.bin_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.binary, title='Select NCIPlot binary'))
+            command=lambda: self._browse_cb(self.binary, mode='filename', title='Select NCIPlot binary'))
         self.bin_browse.grid(row=0, column=2)
 
         self.dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
         self.dat_entry.grid(row=1, column=1)
         self.dat_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.dat_dir, title='Select NCIPlot dat directory'))
+            command=lambda: self._browse_cb(self.dat_dir, mode='directory', title='Select NCIPlot dat directory'))
         self.dat_browse.grid(row=1, column=2)
 
         self.text = tk.StringVar()
@@ -418,11 +419,15 @@ class NCIPlotConfigureDialog(ModalDialog):
             raise ValueError(e)
 
     def Close(self):
+        ModalDialog.Close(self)
         self.destroy()
 
-    def _browse_cb(self, stringvar, **options):
-        result = OpenModal(**options).run(chimera.tkgui.app)
-        try:
-            stringvar.set(result[0][0])
-        except (TypeError, IndexError):
-            pass
+    def _browse_cb(self, var=None, mode='filename', **options):
+        # result = OpenModal(**options).run(chimera.tkgui.app)
+        
+        functions = {'filename': tkFileDialog.askopenfilename,
+                     'directory': tkFileDialog.askdirectory}
+        result = functions[mode](parent=self.parent, **options)
+        if result and var:
+            var.set(result)
+        return result
