@@ -13,6 +13,7 @@ from chimera.baseDialog import ModelessDialog, ModalDialog
 from chimera.widgets import ModelScrolledListBox
 from Pmw import OptionMenu
 from SurfaceColor import surface_value_at_window_position
+from OpenSave import OpenModal
 # Additional 3rd parties
 import matplotlib
 matplotlib.use('TkAgg')
@@ -389,14 +390,20 @@ class NCIPlotConfigureDialog(ModalDialog):
 
         self.bin_entry = tk.Entry(parent, textvariable=self.binary)
         self.bin_entry.grid(row=0, column=1)
+        self.bin_browse = tk.Button(parent, text='...',
+            command=lambda: self._browse_cb(self.binary, title='Select NCIPlot binary'))
+        self.bin_browse.grid(row=0, column=2)
 
         self.dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
         self.dat_entry.grid(row=1, column=1)
+        self.dat_browse = tk.Button(parent, text='...',
+            command=lambda: self._browse_cb(self.dat_dir, title='Select NCIPlot dat directory'))
+        self.dat_browse.grid(row=1, column=2)
 
         self.text = tk.StringVar()
         self.text.set("Tip: Click <Help> to get NCIPlot")
         self.label = tk.Label(parent, textvariable=self.text)
-        self.label.grid(row=2, columnspan=2)
+        self.label.grid(row=2, columnspan=3)
 
     def OK(self):
         self.Apply()
@@ -412,3 +419,10 @@ class NCIPlotConfigureDialog(ModalDialog):
 
     def Close(self):
         self.destroy()
+
+    def _browse_cb(self, stringvar, **options):
+        result = OpenModal(**options).run(chimera.tkgui.app)
+        try:
+            stringvar.set(result[0][0])
+        except (TypeError, IndexError):
+            pass
