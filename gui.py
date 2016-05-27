@@ -61,6 +61,7 @@ class NCIPlotDialog(ModelessDialog):
     buttons = ('OK', 'Close')
     default = None
     help = 'https://www.insilichem.com'
+    configure_dialog = None
 
     def __init__(self, *args, **kwarg):
         # GUI init
@@ -244,8 +245,10 @@ class NCIPlotDialog(ModelessDialog):
         return atoms
 
     def _configure_dialog(self, *args):
-        dialog = NCIPlotConfigureDialog(self)
-        dialog.enter()
+        if self.configure_dialog is None:
+            self.configure_dialog = NCIPlotConfigureDialog(self)
+        self.configure_dialog.enter()
+
 
     def _run_nciplot(self, *args):
         """
@@ -371,40 +374,44 @@ class NCIPlotDialog(ModelessDialog):
         return atoms
 
 
-class NCIPlotConfigureDialog(ModalDialog):
+class NCIPlotConfigureDialog(ModelessDialog):
 
     buttons = ('OK', 'Close')
     help = 'https://www.insilichem.com'
 
     def __init__(self, parent=None):
+        self.parent = parent
         self.title = 'Configure NCIPlot paths'
         self.binary, self.dat_dir = tk.StringVar(), tk.StringVar()
         binary, dat = prefs.get_preferences()
         self.binary.set(binary)
         self.dat_dir.set(dat)
-        ModalDialog.__init__(self, resizable=False)
+        ModelessDialog.__init__(self, resizable=False)
 
     def fillInUI(self, parent):
-        self.parent = parent
-        tk.Label(parent, text='NCIPlot program').grid(row=0)
-        tk.Label(parent, text='NCIPlot dat path').grid(row=1)
+        self.canvas = parent
+        label_0 = tk.Label(parent, text='NCIPlot program')
+        label_1 = tk.Label(parent, text='NCIPlot dat path')
 
         self.bin_entry = tk.Entry(parent, textvariable=self.binary)
-        self.bin_entry.grid(row=0, column=1)
         self.bin_browse = tk.Button(parent, text='...',
             command=lambda: self._browse_cb(self.binary, mode='filename', title='Select NCIPlot binary'))
-        self.bin_browse.grid(row=0, column=2)
 
         self.dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
-        self.dat_entry.grid(row=1, column=1)
         self.dat_browse = tk.Button(parent, text='...',
             command=lambda: self._browse_cb(self.dat_dir, mode='directory', title='Select NCIPlot dat directory'))
-        self.dat_browse.grid(row=1, column=2)
 
         self.text = tk.StringVar()
         self.text.set("Tip: Click <Help> to get NCIPlot")
         self.label = tk.Label(parent, textvariable=self.text)
         self.label.grid(row=2, columnspan=3)
+
+        grid = [[label_0, self.bin_entry, self.bin_browse],
+                [label_1, self.dat_entry, self.dat_browse]]
+        for i, row in enumerate(grid):
+            for j, widget in enumerate(row):
+                widget.grid(row=i, column=j, padx=2, pady=2)
+
 
     def OK(self):
         self.Apply()
@@ -419,7 +426,8 @@ class NCIPlotConfigureDialog(ModalDialog):
             raise ValueError(e)
 
     def Close(self):
-        ModalDialog.Close(self)
+        self.parent.configure_dialog = None
+        ModelessDialog.Close(self)
         self.destroy()
 
     def _browse_cb(self, var=None, mode='filename', **options):
