@@ -435,7 +435,7 @@ class NCIPlotConfigureDialog(ModelessDialog):
         
         functions = {'filename': tkFileDialog.askopenfilename,
                      'directory': tkFileDialog.askdirectory}
-        result = functions[mode](parent=self.parent, **options)
+        result = functions[mode](parent=self.canvas, **options)
         if result and var:
             var.set(result)
         return result
