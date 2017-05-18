@@ -237,6 +237,10 @@ class NCIPlot(object):
         self.subprocess = None
         self.stdout = None
         self.queue = None
+        self.implementation = 'CUDA' if 'cuda' in os.path.split(self.binary)[1].lower() \
+                                     else 'CPU'
+        self.parse_stdout = self._parse_stdout_cuda if self.implementation == 'CUDA' \
+                                                    else self._parse_stdout_cpu
 
     def run(self, *xyz, **options):
         """
@@ -281,8 +285,13 @@ class NCIPlot(object):
         non-blocking-read-on-a-subprocess-pipe-in-python/4896288#4896288
         
         """
-        nci_input = self.create_nci_input(xyz, **options)
         nci_file = osTemporaryFile(suffix='.nci')
+        oldworkingdir = os.getcwd()
+        tmpdir, tmpfile = os.path.split(nci_file)
+        if 'name' not in options or options['name'] is None:
+            options['name'] = tmpfile[:-4]
+        nci_input = self.create_nci_input(xyz, **options)
+        os.chdir(tmpdir)
         with open(nci_file, 'w') as f:
             f.write(nci_input.read())
         name = ', '.join(os.path.basename(f) for f in xyz)
@@ -291,6 +300,7 @@ class NCIPlot(object):
         self.subprocess = Popen([self.binary, nci_file], stdout=PIPE, progressCB= lambda p: 0)
         monitor("NCIPlot", self.subprocess, task=self.task, afterCB=self._after_cb)
         self.task.updateStatus("Running NCIPlot")
+        os.chdir(oldworkingdir)
 
     def _after_cb(self, aborted):
         """
@@ -320,7 +330,7 @@ class NCIPlot(object):
         self.subprocess.stdout.close()
         self.task, self.subprocess, self.queue = None, None, None
 
-    def parse_stdout(self, stdout):
+    def _parse_stdout_cpu(self, stdout):
         """
         Get useful data from NCIPlot stdout, or any file-like object.
         """
@@ -340,6 +350,37 @@ class NCIPlot(object):
             elif 'LS x RDG' in line:
                 data['xy_data'] = line.split('=')[-1].strip()
             data['_raw'].append(line)
+        return data
+
+    def _parse_stdout_cuda(self, stdout):
+        """
+        Get useful data from CUDA NCIPlot [1] stdout, or any file-like object.
+
+        [1] A GPU accelerated implementation of NCI calculations using pro-molecular
+            density. Rubez G, Etancelin JM, Vigouroux X, Krajecki M, Boisson JC, 
+            Henon E., J. Comput. Chem. 2017, 38, 1071
+        """
+        data = {}
+        basedir = None
+        data['_raw'] = []
+        for line in stdout:
+            data['_raw'].append(line)
+            line = line.strip()
+            if not line.startswith('*'):
+                continue
+            line = line.strip('*')
+            if 'MoleculeFile' in line:
+                basedir = os.path.split(line.split(':')[1].split()[0])[0]
+            elif basedir and 'OutPut filenam Prefix' in line:
+                basename = line.split(':')[1].strip()
+                data['grad_cube'] = os.path.join(basedir, basename + '-RDG.cube')
+                data['dens_cube'] = os.path.join(basedir, basename + '-dens.cube')
+                data['xy_data'] = os.path.join(basedir, basename + '.dat')
+            elif '.cube rho range' in line:
+                data['rho'] = float(line.split()[6])
+            elif '.dat rdg range' in line:
+                data['rdg'] = float(line.split()[6])
+
         return data
 
     @staticmethod
@@ -530,7 +571,7 @@ def interpolate_range_into_n_values(vrange, n):
         yield a
 
 if __name__ == '__main__':
-    path = '/home/jrodriguez/dev/plume/nciplot/res/nciplot/src/nciplot'
-    dat = '/home/jrodriguez/dev/plume/nciplot/res/nciplot/dat'
+    path = 'nciplot/src/nciplot'
+    dat = 'nciplot/dat'
     c = Controller(nciplot_binary=path, nciplot_dat=dat)
     c.run()
