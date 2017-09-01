@@ -295,7 +295,7 @@ class NCIPlot(object):
         with open(nci_file, 'w') as f:
             f.write(nci_input.read())
         name = ', '.join(os.path.basename(f) for f in xyz)
-
+        self._tmpdir = tmpdir
         self.task = Task("NCIPlot for {}".format(name), cancelCB=self._clear_task)
         self.subprocess = Popen([self.binary, nci_file], stdout=PIPE, progressCB= lambda p: 0)
         monitor("NCIPlot", self.subprocess, task=self.task, afterCB=self._after_cb)
@@ -328,7 +328,7 @@ class NCIPlot(object):
         """
         self.task.finished()
         self.subprocess.stdout.close()
-        self.task, self.subprocess, self.queue = None, None, None
+        self.task, self.subprocess, self.queue, self._tmpdir = None, None, None, None
 
     def _parse_stdout_cpu(self, stdout):
         """
@@ -344,11 +344,11 @@ class NCIPlot(object):
             elif line.lstrip().startswith('RDG'):
                 data['rdg'] = float(line.split()[-1].strip())
             elif line.rstrip().endswith('-grad.cube'):
-                data['grad_cube'] = line.split('=')[-1].strip()
+                data['grad_cube'] = os.path.join(self._tmpdir, line.split('=')[-1].strip())
             elif line.rstrip().endswith('-dens.cube'):
-                data['dens_cube'] = line.split('=')[-1].strip()
+                data['dens_cube'] = os.path.join(self._tmpdir, line.split('=')[-1].strip())
             elif 'LS x RDG' in line:
-                data['xy_data'] = line.split('=')[-1].strip()
+                data['xy_data'] = os.path.join(self._tmpdir, line.split('=')[-1].strip())
             data['_raw'].append(line)
         return data
 
