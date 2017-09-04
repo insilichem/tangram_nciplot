@@ -384,6 +384,10 @@ class NCIPlotConfigureDialog(ModelessDialog):
         self.title = 'Configure NCIPlot paths'
         self.binary, self.dat_dir = tk.StringVar(), tk.StringVar()
         binary, dat = prefs.get_preferences()
+        if binary is None:
+            binary = ''
+        if dat is None:
+            dat = ''
         self.binary.set(binary)
         self.dat_dir.set(dat)
         ModelessDialog.__init__(self, resizable=False)
