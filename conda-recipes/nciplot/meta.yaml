@@ -1,0 +1,25 @@
+package:
+  name: nciplot
+  version: git20170610
+
+source:
+  fn: nciplot-8437fcb5f625ecd626a0446dd6069cc5fbaef760.tar.gz
+  url: https://codeload.github.com/aoterodelaroza/nciplot/tar.gz/8437fcb5f625ecd626a0446dd6069cc5fbaef760
+  md5: 2973092449db182899a459963a556232
+
+# source:
+#   git_url: https://github.com/aoterodelaroza/nciplot.git
+#   git_rev: 8437fcb5f625ecd626a0446dd6069cc5fbaef760
+
+build:
+  number: 2
+
+requirements:
+  build:
+    - gcc       # [unix]
+    - mingwpy   # [win]
+    - unxutils  # [win]
+
+about:
+  home: https://github.com/aoterodelaroza/nciplot
+  license: GPL

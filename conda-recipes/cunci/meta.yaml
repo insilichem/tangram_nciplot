@@ -1,0 +1,21 @@
+package:
+  name: cunci
+  version: '1.0'
+
+source:
+  fn: cuNCI-1.0.tar.bz2
+  url: http://www.lct.jussieu.fr/pagesperso/contrera/cuNCI-1.0.tbz2
+  md5: 26f6ceda7cdedfa36c536928776d46ff
+
+build:
+  number: 1
+
+requirements:
+  build:
+    - cudatoolkit
+    - nciplot
+    - unxutils  # [win]
+
+about:
+  home: http://www.lct.jussieu.fr/pagesperso/contrera/nci-GPU.html
+  license: CeCILL-C
