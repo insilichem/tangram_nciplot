@@ -1,0 +1,9 @@
+nciplot/ChimeraExtension.py
+nciplot/__init__.py
+nciplot/core.py
+nciplot/gui.py
+nciplot/prefs.py
+plume_nciplot.egg-info/PKG-INFO
+plume_nciplot.egg-info/SOURCES.txt
+plume_nciplot.egg-info/dependency_links.txt
+plume_nciplot.egg-info/top_level.txt
