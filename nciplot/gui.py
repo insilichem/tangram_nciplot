@@ -208,6 +208,7 @@ class NCIPlotDialog(ModelessDialog):
         global ui
         ui = None
         ModelessDialog.Close(self)
+        chimera.extension.manager.deregisterInstance(self)
         # self.destroy()
 
     # Below this line, implement all your custom methods for the GUI.
@@ -432,6 +433,7 @@ class NCIPlotConfigureDialog(ModelessDialog):
     def Close(self):
         self.parent.configure_dialog = None
         ModelessDialog.Close(self)
+        chimera.extension.manager.deregisterInstance(self)
         self.destroy()
 
     def _browse_cb(self, var=None, mode='filename', **options):
