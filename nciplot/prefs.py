@@ -30,7 +30,7 @@ def assert_preferences():
             dat = os.path.join(os.environ['NCIPLOT_HOME'], 'dat')
         preferences.set('plume_nciplot', 'nciplot_bin', binary)
         preferences.set('plume_nciplot', 'nciplot_dat', dat)
-        preferences.save(preferences.preferences._filename)
+        preferences.save()
     return binary, dat
 
 
@@ -39,7 +39,7 @@ def set_preferences(binary, dat):
     if os.path.isfile(binary) and os.path.isdir(dat):
         preferences.set('plume_nciplot', 'nciplot_bin', binary)
         preferences.set('plume_nciplot', 'nciplot_dat', dat)
-        preferences.save(preferences.preferences._filename)
+        preferences.save()
     else:
         raise ValueError('One or more of the specified paths do not exist.')
 

@@ -22,6 +22,7 @@ matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 # Own
+from plumesuite.ui import PlumeBaseDialog
 from core import Controller, standard_color_palettes
 import prefs
 
@@ -48,7 +49,7 @@ def showUI(callback=None):
         ui.addCallback(callback)
 
 
-class NCIPlotDialog(ModelessDialog):
+class NCIPlotDialog(PlumeBaseDialog):
 
     """
     To display a new dialog on the interface, you will normally inherit from
@@ -58,30 +59,22 @@ class NCIPlotDialog(ModelessDialog):
     claim exclusive usage, use ModalDialog.
     """
 
-    buttons = ('OK', 'Close')
-    default = None
-    help = 'https://www.insilichem.com'
+    buttons = ('Run', 'Close')
     configure_dialog = None
 
-    def __init__(self, *args, **kwarg):
+    def __init__(self, *args, **kwargs):
         # GUI init
         self.title = 'Plume NCIPlot'
         self._mouse_report_binding = None
         # Fire up
-        ModelessDialog.__init__(self, resizable=False)
-        chimera.extension.manager.registerInstance(self)
+        super(NCIPlotDialog, self).__init__(self, *args, **kwargs)
 
-    def fillInUI(self, parent):
+
+    def fill_in_ui(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Main frame is always called 'canvas'
-        parent.configure(width=50)
-        parent.pack(expand=True, fill='y')
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='y', padx=10, pady=10)
-
         # Select an input menu: Radio buttons
         self.input_frame = tk.LabelFrame(self.canvas, text='Input mode', padx=5, pady=5)
         self.input_frame.pack(expand=True, fill='x')
@@ -142,8 +135,6 @@ class NCIPlotDialog(ModelessDialog):
         self.nciplot_frame.pack()
         tk.Button(self.nciplot_frame, text='Configure',
                   command=self._configure_dialog).pack(side='left')
-        self.nciplot_run = tk.Button(self.nciplot_frame, text='Run', command=self._run_nciplot)
-        self.nciplot_run.pack(side='left')
 
         # Configure Volume Viewer
         self.settings_frame = tk.LabelFrame(self.canvas, text='Customize display', padx=5, pady=5)
@@ -187,29 +178,7 @@ class NCIPlotDialog(ModelessDialog):
 
         # Register and map triggers, callbacks...
         chimera.triggers.addHandler('selection changed', self._on_selection_changed, None)
-
-    def Apply(self):
-        """
-        Default! Triggered action if you click on an Apply button
-        """
-        pass
-
-    def OK(self):
-        """
-        Default! Triggered action if you click on an OK button
-        """
-        self.Apply()
-        self.Close()
-
-    def Close(self):
-        """
-        Default! Triggered action if you click on the Close button
-        """
-        global ui
-        ui = None
-        ModelessDialog.Close(self)
-        chimera.extension.manager.deregisterInstance(self)
-        # self.destroy()
+        self.nciplot_run = self.buttonWidgets['Run']
 
     # Below this line, implement all your custom methods for the GUI.
     def load_controller(self):
@@ -251,7 +220,7 @@ class NCIPlotDialog(ModelessDialog):
         self.configure_dialog.enter()
 
 
-    def _run_nciplot(self, *args):
+    def Run(self, *args):
         """
         Called at clicking 'Run' button.
         """
@@ -375,13 +344,11 @@ class NCIPlotDialog(ModelessDialog):
         return atoms
 
 
-class NCIPlotConfigureDialog(ModelessDialog):
+class NCIPlotConfigureDialog(PlumeBaseDialog):
 
     buttons = ('OK', 'Close')
-    help = 'https://www.insilichem.com'
 
-    def __init__(self, parent=None):
-        self.parent = parent
+    def __init__(self, *args, **kwargs):
         self.title = 'Configure NCIPlot paths'
         self.binary, self.dat_dir = tk.StringVar(), tk.StringVar()
         binary, dat = prefs.get_preferences()
@@ -391,10 +358,9 @@ class NCIPlotConfigureDialog(ModelessDialog):
             dat = ''
         self.binary.set(binary)
         self.dat_dir.set(dat)
-        ModelessDialog.__init__(self, resizable=False)
+        super(NCIPlotConfigureDialog, self).__init__(self, *args, **kwargs)
 
-    def fillInUI(self, parent):
-        self.canvas = parent
+    def fill_in_ui(self, parent):
         label_0 = tk.Label(parent, text='NCIPlot program')
         label_1 = tk.Label(parent, text='NCIPlot dat path')
 
@@ -429,12 +395,6 @@ class NCIPlotConfigureDialog(ModelessDialog):
             self.text.set(str(e))
             self.label.configure(foreground='red')
             raise ValueError(e)
-
-    def Close(self):
-        self.parent.configure_dialog = None
-        ModelessDialog.Close(self)
-        chimera.extension.manager.deregisterInstance(self)
-        self.destroy()
 
     def _browse_cb(self, var=None, mode='filename', **options):
         # result = OpenModal(**options).run(chimera.tkgui.app)
