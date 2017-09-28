@@ -6,7 +6,7 @@ This is the preferences file for the extension. All default values
 should be listed here for reference and easy reuse.
 """
 
-# Get used to importing this in your Py27 projects!
+
 from __future__ import print_function, division
 from distutils.spawn import find_executable
 import os

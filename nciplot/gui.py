@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Get used to importing this in your Py27 projects!
+
 from __future__ import print_function, division
 # Python stdlib
 import Tkinter as tk
@@ -11,7 +11,7 @@ from operator import attrgetter
 # Chimera stuff
 import chimera
 from chimera.baseDialog import ModelessDialog, ModalDialog
-from chimera.widgets import ModelScrolledListBox
+from chimera.widgets import MoleculeScrolledListBox
 from Pmw import OptionMenu
 from SurfaceColor import surface_value_at_window_position
 from OpenSave import OpenModal
@@ -26,17 +26,11 @@ from plumesuite.ui import PlumeBaseDialog
 from core import Controller, standard_color_palettes
 import prefs
 
-"""
-The gui.py module contains the interface code, and only that. 
-It should only 'draw' the window, and should NOT contain any
-business logic like parsing files or applying modifications
-to the opened molecules. That belongs to core.py.
-"""
 
 ui = None
 def showUI(callback=None):
     global ui
-    if not ui:  # Edit this to reflect the name of the class!
+    if not ui:
         ui = NCIPlotDialog()
     ui.enter()
     if callback:
@@ -45,13 +39,6 @@ def showUI(callback=None):
 
 class NCIPlotDialog(PlumeBaseDialog):
 
-    """
-    To display a new dialog on the interface, you will normally inherit from
-    ModelessDialog class of chimera.baseDialog module. Being modeless means
-    you can have this dialog open while using other parts of the interface.
-    If you don't want this behaviour and instead you want your extension to 
-    claim exclusive usage, use ModalDialog.
-    """
 
     buttons = ('Run', 'Close')
     configure_dialog = None
@@ -75,22 +62,18 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.var_settings_isovalue_2.set('')
         self.var_settings_report = tk.IntVar()
         self.var_reported_value = tk.StringVar()
+        
         # Fire up
         super(NCIPlotDialog, self).__init__(self, *args, **kwargs)
 
 
     def fill_in_ui(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
         # Select an input menu: Radio buttons
-        self.ui_input_frame = tk.LabelFrame(self.canvas, text='Input mode', 
-                padx=5, pady=5)
-        self.ui_input_frame.pack(expand=True, fill='x')
+        self.ui_input_frame = tk.LabelFrame(self.canvas, text='Input mode')
+        self.ui_input_frame.pack(expand=True, fill='x', padx=5, pady=5)
         self.ui_input_frame.columnconfigure(0, weight=1)
         self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
-        self.ui_input_choice_frame.grid(row=0)
+        self.ui_input_choice_frame.grid(row=0, sticky='we')
         self.ui_input_choice_molecules = tk.Radiobutton(self.ui_input_choice_frame, 
                 variable=self.var_input_choice, text='Molecules', value='molecules',
                 command=self._input_choice_cb)
@@ -103,11 +86,10 @@ class NCIPlotDialog(PlumeBaseDialog):
 
         # Mode A: Opened molecules
         self.ui_input_molecules_frame = tk.Frame(self.ui_input_frame)
-        self.ui_input_molecules_frame.grid(row=1)
+        self.ui_input_molecules_frame.grid(row=1, sticky='news')
         self.ui_input_molecules_frame.columnconfigure(0, weight=1)
-        self.ui_input_molecules = ModelScrolledListBox(self.ui_input_molecules_frame,
+        self.ui_input_molecules = MoleculeScrolledListBox(self.ui_input_molecules_frame,
                 selectioncommand=self._on_selection_changed,
-                filtFunc=lambda m: isinstance(m, chimera.Molecule),
                 listbox_selectmode="extended")
         self.ui_input_molecules.pack(expand=True, fill='x', padx=5)
 
@@ -195,7 +177,6 @@ class NCIPlotDialog(PlumeBaseDialog):
         chimera.triggers.addHandler('selection changed', self._on_selection_changed, None)
         self.nciplot_run = self.buttonWidgets['Run']
 
-    # Below this line, implement all your custom methods for the GUI.
     def load_controller(self):
         binary, dat = prefs.get_preferences()
         return Controller(gui=self, nciplot_binary=binary, nciplot_dat=dat)

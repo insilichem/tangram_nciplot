@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Get used to importing this in your Py27 projects!
+
 from __future__ import print_function, division
 # Python stdlib
 from cStringIO import StringIO
@@ -19,10 +19,6 @@ import numpy as np
 # Own
 standard_color_palettes['nciplot'] = ((0,0,1,1), (0,1,0,1), (1,0,0,1))
 
-"""
-This module contains the business logic of your extension. Normally, it should
-contain the Controller and the Model. Read on MVC design if you don't know about it.
-"""
 
 
 class Controller(object):
@@ -81,7 +77,7 @@ class Controller(object):
 
     def colorize_by_color(self, color, surface=None):
         """
-        Apply a flat color, with no leves, to a given surface
+        Apply a flat color, with no levels, to a given surface
         
         Parameters
         ----------
