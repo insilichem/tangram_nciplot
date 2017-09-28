@@ -33,14 +33,8 @@ business logic like parsing files or applying modifications
 to the opened molecules. That belongs to core.py.
 """
 
-# This is a Chimera thing. Do it, and deal with it.
 ui = None
-
-
 def showUI(callback=None):
-    """
-    Requested by Chimera way-of-doing-things
-    """
     global ui
     if not ui:  # Edit this to reflect the name of the class!
         ui = NCIPlotDialog()
@@ -76,103 +70,122 @@ class NCIPlotDialog(PlumeBaseDialog):
         the whole dialog, buttons, textareas and everything.
         """
         # Select an input menu: Radio buttons
-        self.input_frame = tk.LabelFrame(self.canvas, text='Input mode', padx=5, pady=5)
-        self.input_frame.pack(expand=True, fill='x')
-        self.input_choice_frame = tk.Frame(self.input_frame)
-        self.input_choice_frame.grid(row=0)
-        self.input_choice = tk.StringVar()
-        self.input_choice.set('molecules')
-        self.input_choice_molecules = tk.Radiobutton(self.input_choice_frame, variable=self.input_choice,
-                                                     text='Molecules', value='molecules',
-                                                     command=self._input_choice_cb)
-        self.input_choice_selection = tk.Radiobutton(self.input_choice_frame, variable=self.input_choice,
-                                                     text='Selection', value='selection',
-                                                     command=self._input_choice_cb)
-        self.input_choice_molecules.pack(side='left')
-        self.input_choice_selection.pack(side='left')
-        self.input_choice_molecules.select()
+        self.ui_input_frame = tk.LabelFrame(self.canvas, text='Input mode', 
+                padx=5, pady=5)
+        self.ui_input_frame.pack(expand=True, fill='x')
+        self.ui_input_frame.columnconfigure(0, weight=1)
+        self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
+        self.ui_input_choice_frame.grid(row=0)
+        self.var_input_choice = tk.StringVar()
+        self.var_input_choice.set('molecules')
+        self.ui_input_choice_molecules = tk.Radiobutton(self.ui_input_choice_frame, 
+                variable=self.var_input_choice, text='Molecules', value='molecules',
+                command=self._input_choice_cb)
+        self.ui_input_choice_selection = tk.Radiobutton(self.ui_input_choice_frame, 
+                variable=self.var_input_choice, text='Selection', value='selection',
+                command=self._input_choice_cb)
+        self.ui_input_choice_molecules.pack(side='left')
+        self.ui_input_choice_selection.pack(side='left')
+        self.ui_input_choice_molecules.select()
 
         # Mode A: Opened molecules
-        self.input_molecules_frame = tk.Frame(self.input_frame)
-        self.input_molecules_frame.grid(row=1)
-        self.input_molecules = ModelScrolledListBox(self.input_molecules_frame,
-                                                    selectioncommand=self._on_selection_changed,
-                                                    filtFunc=lambda m: isinstance(
-                                                        m, chimera.Molecule),
-                                                    listbox_selectmode="extended")
-        self.input_molecules.pack(expand=True, fill='x', padx=5)
+        self.ui_input_molecules_frame = tk.Frame(self.ui_input_frame)
+        self.ui_input_molecules_frame.grid(row=1)
+        self.ui_input_molecules_frame.columnconfigure(0, weight=1)
+        self.ui_input_molecules = ModelScrolledListBox(self.ui_input_molecules_frame,
+                selectioncommand=self._on_selection_changed,
+                filtFunc=lambda m: isinstance(m, chimera.Molecule),
+                listbox_selectmode="extended")
+        self.ui_input_molecules.pack(expand=True, fill='x', padx=5)
 
         # Mode B: Current selection
         items = ['Current selection'] + sorted(chimera.selection.savedSels.keys())
-        self.input_named_selections = OptionMenu(self.input_molecules_frame, command=None, items=items)
+        self.ui_input_named_selections = OptionMenu(self.ui_input_molecules_frame, 
+                command=None, items=items)
         self.input_new_named_atom_selection = None  # Text field + 'Create button'
 
         # More options
-        self.input_intermolecular_frame = tk.Frame(self.input_frame)
-        self.input_intermolecular_frame.grid(row=2)
-        self.input_intermolecular_enabled = tk.IntVar()
-        self.input_intermolecular_check = tk.Checkbutton(
-            self.input_intermolecular_frame, text='Filter out % of intramolecular',
-            variable=self.input_intermolecular_enabled,
-            command=self._intermolecular_cb, state='disabled')
-        self.input_intermolecular_check.pack(side='left')
-        self.input_intermolecular = tk.IntVar()
-        self.input_intermolecular.set(95)
-        self.input_intermolecular_field = tk.Entry(self.input_intermolecular_frame,
-                                                   textvariable=self.input_intermolecular,
-                                                   state='disabled', width=3)
-        self.input_intermolecular_field.pack(side='left')
+        self.ui_input_intermolecular_frame = tk.Frame(self.ui_input_frame)
+        self.ui_input_intermolecular_frame.grid(row=2)
+        self.var_input_intermolecular_enabled = tk.IntVar()
+        self.ui_input_intermolecular_check = tk.Checkbutton(
+                self.ui_input_intermolecular_frame, text='Filter out % of intramolecular',
+                variable=self.var_input_intermolecular_enabled,
+                command=self._intermolecular_cb, state='disabled')
+        self.ui_input_intermolecular_check.pack(side='left')
+        self.var_input_intermolecular = tk.IntVar()
+        self.var_input_intermolecular.set(95)
+        self.ui_input_intermolecular_field = tk.Entry(self.ui_input_intermolecular_frame,
+                textvariable=self.var_input_intermolecular, state='disabled', width=3)
+        self.ui_input_intermolecular_field.pack(side='left')
 
         # Review input data
-        self.input_summary = tk.StringVar()
-        self.input_summary.set('Please select your input.')
-        self.input_summary_label = tk.Label(self.input_frame, textvariable=self.input_summary)
-        self.input_summary_label.grid(row=3)
+        self.var_input_summary = tk.StringVar()
+        self.var_input_summary.set('Please select your input.')
+        self.ui_input_summary_label = tk.Label(self.ui_input_frame, 
+                textvariable=self.var_input_summary)
+        self.ui_input_summary_label.grid(row=3)
 
 
         # NCIPlot launcher
-        self.nciplot_frame = tk.Frame(self.canvas)
-        self.nciplot_frame.pack()
-        tk.Button(self.nciplot_frame, text='Configure',
-                  command=self._configure_dialog).pack(side='left')
+        self.ui_nciplot_frame = tk.Frame(self.canvas)
+        self.ui_nciplot_frame.pack()
+        self.ui_config_btn = tk.Button(self.ui_nciplot_frame, text='Configure',
+                command=self._configure_dialog)
+        self.ui_config_btn.pack(side='left')
 
         # Configure Volume Viewer
-        self.settings_frame = tk.LabelFrame(self.canvas, text='Customize display', padx=5, pady=5)
-        tk.Label(self.settings_frame, text='Levels: ').grid(row=0, column=0)
-        self.settings_isovalue_1, self.settings_isovalue_2 = tk.StringVar(), tk.StringVar()
-        self.settings_isovalue_1.set('')
-        self.settings_isovalue_2.set('')
-        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_1,
-                 width=10).grid(row=0, column=1, sticky='ew')
-        tk.Entry(self.settings_frame, textvariable=self.settings_isovalue_2,
-                 width=10).grid(row=0, column=2, sticky='ew')
-        tk.Button(self.settings_frame, text='Update',
-                  command=self._update_surface).grid(row=0, column=3, rowspan=2, sticky='news')
+        self.ui_settings_frame = tk.LabelFrame(self.canvas, 
+                text='Customize display', padx=5, pady=5)
+        self.ui_levels_lbl = tk.Label(self.ui_settings_frame, 
+                text='Levels: ')
+        self.ui_levels_lbl.grid(row=0, column=0)
+        self.var_settings_isovalue_1 = tk.StringVar()
+        self.var_settings_isovalue_1.set('')
+        self.var_settings_isovalue_2 = tk.StringVar()
+        self.var_settings_isovalue_2.set('')
+        self.ui_settings_isovalue_1 = tk.Entry(self.ui_settings_frame,
+                textvariable=self.var_settings_isovalue_1,
+                width=10)
+        self.ui_settings_isovalue_1.grid(row=0, column=1, sticky='ew')
+        self.ui_settings_isovalue_2 = tk.Entry(self.ui_settings_frame, 
+                textvariable=self.var_settings_isovalue_2,
+                width=10)
+        self.ui_settings_isovalue_2.grid(row=0, column=2, sticky='ew')
+        self.ui_settings_update_btn = tk.Button(self.ui_settings_frame, 
+                text='Update', command=self._update_surface)
+        self.ui_settings_update_btn.grid(row=0, column=3, rowspan=2, sticky='news')
 
-        self.settings_color_palette = OptionMenu(self.settings_frame, initialitem=3,
-                                                 label_text='Colors: ', labelpos='w',
-                                                 items=sorted(standard_color_palettes.keys()))
-        self.settings_color_palette.grid(row=1, column=0, columnspan=3, sticky='we')
+        self.ui_settings_color_palette = OptionMenu(self.ui_settings_frame, 
+                initialitem=3, label_text='Colors: ', labelpos='w',
+                items=sorted(standard_color_palettes.keys()))
+        self.ui_settings_color_palette.grid(row=1, column=0, columnspan=3, 
+                sticky='we')
 
-        self.settings_report = tk.IntVar()
-        tk.Checkbutton(self.settings_frame, text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor',
-                       command=self._report_values_cb,
-                       variable=self.settings_report).grid(row=2, column=0, columnspan=3)
-        self.reported_value = tk.StringVar()
-        tk.Entry(self.settings_frame, textvariable=self.reported_value,
-                 state='readonly', width=8).grid(row=2, column=3, sticky='we')
+        self.var_settings_report = tk.IntVar()
+        self.ui_report_btn = tk.Checkbutton(self.ui_settings_frame, 
+            text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor',
+            command=self._report_values_cb, variable=self.var_settings_report)
+        self.ui_report_btn.grid(row=2, column=0, columnspan=3)
+        self.var_reported_value = tk.StringVar()
+        self.ui_reported_value = tk.Entry(self.ui_settings_frame, 
+            textvariable=self.var_reported_value, state='readonly', 
+            width=8)
+        self.ui_reported_value.grid(row=2, column=3, sticky='we')
 
         # Plot figure
-        self.plot_frame = tk.LabelFrame(self.canvas, text=u'Plot RDG vs density (\u03BB\u2082\u22C5\u03C1)',
-                                        padx=5, pady=5)
-        self.plot_button = tk.Button(self.plot_frame, text='Plot', command=self._plot)
-        self.plot_button.grid(row=0)
-        self.plot_figure = Figure(figsize=(5, 5), dpi=100, facecolor='#D9D9D9')
-        self.plot_subplot = self.plot_figure.add_subplot(111)
+        self.ui_plot_frame = tk.LabelFrame(self.canvas, 
+                text=u'Plot RDG vs density (\u03BB\u2082\u22C5\u03C1)',
+                padx=5, pady=5)
+        self.ui_plot_button = tk.Button(self.ui_plot_frame, text='Plot', command=self._plot)
+        self.ui_plot_button.grid(row=0)
+        self.ui_plot_figure = Figure(figsize=(5, 5), dpi=100, facecolor='#D9D9D9')
+        self.ui_plot_subplot = self.ui_plot_figure.add_subplot(111)
 
-        self.plot_widget_frame = tk.Frame(self.plot_frame)
-        self.plot_widget_frame.grid(row=1)
-        self.plot_widget = FigureCanvasTkAgg(self.plot_figure, master=self.plot_widget_frame)
+        self.ui_plot_widget_frame = tk.Frame(self.ui_plot_frame)
+        self.ui_plot_widget_frame.grid(row=1)
+        self.ui_plot_widget = FigureCanvasTkAgg(self.ui_plot_figure, 
+                                                master=self.ui_plot_widget_frame)
         # self.plot_cursor = Cursor(self.plot_subplot, useblit=True, color='black', linewidth=1)
         # self.plot_figure.canvas.mpl_connect('button_press_event', self._on_plot_click)
 
@@ -187,8 +200,8 @@ class NCIPlotDialog(PlumeBaseDialog):
 
     def input_options(self):
         d = {}
-        if self.input_intermolecular_enabled.get():
-            d['intermolecular'] = self.input_intermolecular.get() / 100.0
+        if self.var_input_intermolecular_enabled.get():
+            d['intermolecular'] = self.var_input_intermolecular.get() / 100.0
         return d
 
     # All the callbacks
@@ -196,19 +209,19 @@ class NCIPlotDialog(PlumeBaseDialog):
         """
         Change input mode
         """
-        if self.input_choice.get() == 'molecules':
-            self.input_molecules.pack(expand=True, fill='x', padx=5)
-            self.input_named_selections.pack_forget()
-        elif self.input_choice.get() == 'selection':
-            self.input_molecules.pack_forget()
-            self.input_named_selections.pack(expand=True, fill='x', padx=5)
+        if self.var_input_choice.get() == 'molecules':
+            self.ui_input_molecules.pack(expand=True, fill='x', padx=5)
+            self.ui_input_named_selections.pack_forget()
+        elif self.var_input_choice.get() == 'selection':
+            self.ui_input_molecules.pack_forget()
+            self.ui_input_named_selections.pack(expand=True, fill='x', padx=5)
         self._on_selection_changed()
 
     def _intermolecular_cb(self):
-        if self.input_intermolecular_enabled.get():
-            self.input_intermolecular_field.config(state='normal')
+        if self.var_input_intermolecular_enabled.get():
+            self.ui_input_intermolecular_field.config(state='normal')
         else:
-            self.input_intermolecular_field.config(state='disabled')
+            self.ui_input_intermolecular_field.config(state='disabled')
 
     def _validate_input_data(self, *args):
         atoms = self._on_selection_changed()
@@ -233,29 +246,34 @@ class NCIPlotDialog(PlumeBaseDialog):
             self.controller = self.load_controller()
             self.controller.run(groups=groups, **options)
             self.nciplot_run.configure(state='disabled', text='Running...')
-            self.settings_frame.pack_forget()
+            self.ui_settings_frame.pack_forget()
+    
+    def Close(self):  # Singleton mode
+        global ui
+        ui = None
+        super(NCIPlotDialog, self).Close()
 
     def _run_nciplot_cb(self):
         """
         Called after NCIPlot has successfully run
         """
         self.nciplot_run.configure(state='normal', text='Run')
-        self.settings_isovalue_1.set(self.controller.surface.surface_levels[0])
-        self.settings_isovalue_2.set(self.controller.surface.surface_levels[1])
-        self.settings_frame.pack()
-        self.plot_frame.pack(expand=True, fill='both')
+        self.var_settings_isovalue_1.set(self.controller.surface.surface_levels[0])
+        self.var_settings_isovalue_2.set(self.controller.surface.surface_levels[1])
+        self.ui_settings_frame.pack()
+        self.ui_plot_frame.pack(expand=True, fill='both')
 
     def _run_nciplot_clear_cb(self):
         """
         Housecleaning method. Resets everything to original state
         """
         self.nciplot_run.configure(state='normal', text='Run')
-        self.plot_button.configure(state='normal')
-        self.settings_frame.pack_forget()
-        self.settings_isovalue_1.set('')
-        self.settings_isovalue_2.set('')
-        self.plot_frame.pack_forget()
-        self.plot_widget.get_tk_widget().pack_forget()
+        self.ui_plot_button.configure(state='normal')
+        self.ui_settings_frame.pack_forget()
+        self.var_settings_isovalue_1.set('')
+        self.var_settings_isovalue_2.set('')
+        self.ui_plot_frame.pack_forget()
+        self.ui_plot_widget.get_tk_widget().pack_forget()
         self.controller = None
 
     def _update_surface(self):
@@ -263,13 +281,13 @@ class NCIPlotDialog(PlumeBaseDialog):
         Gets GUI options, sets them and updates the surface
         """
         # Levels
-        isovalue_1 = float(self.settings_isovalue_1.get())
-        isovalue_2 = float(self.settings_isovalue_2.get())
+        isovalue_1 = float(self.var_settings_isovalue_1.get())
+        isovalue_2 = float(self.var_settings_isovalue_2.get())
         self.controller.isosurface(level_1=isovalue_1, level_2=isovalue_2)
         # Update view
         self.controller.update_surface()
         # Colors
-        palette = self.settings_color_palette.getvalue()
+        palette = self.ui_settings_color_palette.getvalue()
         self.controller.colorize_by_volume(palette=palette)
         # Update view
         self.controller.update_surface()
@@ -278,16 +296,16 @@ class NCIPlotDialog(PlumeBaseDialog):
         """
         Draw density vs rdg with a hexbin
         """
-        self.controller.plot(self.plot_subplot)
-        self.plot_widget.get_tk_widget().pack(expand=True, fill='both')
-        self.plot_widget.show()
-        self.plot_button.configure(state='disabled')
+        self.controller.plot(self.ui_plot_subplot)
+        self.ui_plot_widget.get_tk_widget().pack(expand=True, fill='both')
+        self.ui_plot_widget.show()
+        self.ui_plot_button.configure(state='disabled')
 
     def _report_values_cb(self):
         """
         Binds mouse mouse callbacks to mouse movement events
         """
-        if self.settings_report.get() and self._mouse_report_binding is None:
+        if self.var_settings_report.get() and self._mouse_report_binding is None:
             self._mouse_report_binding = chimera.tkgui.app.graphics.bind('<Any-Motion>',
                                                                          self._report_values_event, add=True)
 
@@ -295,13 +313,13 @@ class NCIPlotDialog(PlumeBaseDialog):
         """
         Report value of isosurface at cursor point
         """
-        if self.settings_report.get() and self.isVisible():
+        if self.var_settings_report.get() and self.isVisible():
             vpn = surface_value_at_window_position(event.x, event.y)
             if vpn is None:
-                self.reported_value.set('')
+                self.var_reported_value.set('')
             else:
                 value, position, name = vpn
-                self.reported_value.set('{:8.5g}'.format(float(value)))
+                self.var_reported_value.set('{:8.5g}'.format(float(value)))
                 chimera.replyobj.status('{} at cursor: {:8.5g}'.format(name, float(value)))
 
     def _on_plot_click(self, event):
@@ -310,9 +328,9 @@ class NCIPlotDialog(PlumeBaseDialog):
         Left click sets isovalue 1, right click sets isovalue 2
         """
         if event.button == 1:
-            self.settings_isovalue_1.set(round(event.xdata, 2))
+            self.var_settings_isovalue_1.set(round(event.xdata, 2))
         elif event.button == 3:
-            self.settings_isovalue_2.set(round(event.xdata, 2))
+            self.var_settings_isovalue_2.set(round(event.xdata, 2))
 
     def _on_selection_changed(self, *args):
         """
@@ -320,25 +338,25 @@ class NCIPlotDialog(PlumeBaseDialog):
         reports number of atoms
         """
         atoms = []
-        if self.input_choice.get() == 'selection':
+        if self.var_input_choice.get() == 'selection':
             atoms = chimera.selection.currentAtoms()
             molecules = chimera.selection.currentMolecules()
-        elif self.input_choice.get() == 'molecules':
-            molecules = self.input_molecules.getvalue()
+        elif self.var_input_choice.get() == 'molecules':
+            molecules = self.ui_input_molecules.getvalue()
             atoms = [a for m in molecules for a in m.atoms]
 
         color, state = ('black', 'normal') if atoms else ('red', 'disabled')
         self.nciplot_run.configure(state=state)
-        self.input_summary_label.configure(foreground=color)
-        self.input_summary.set('{} selected atoms'.format(len(atoms)))
+        self.ui_input_summary_label.configure(foreground=color)
+        self.var_input_summary.set('{} selected atoms'.format(len(atoms)))
 
 
         if len(molecules) > 1:
-            self.input_intermolecular_check.config(state='normal')
-            self.input_intermolecular_check.select()
+            self.ui_input_intermolecular_check.config(state='normal')
+            self.ui_input_intermolecular_check.select()
         else:
-            self.input_intermolecular_check.config(state='disabled')
-            self.input_intermolecular_check.deselect()
+            self.ui_input_intermolecular_check.config(state='disabled')
+            self.ui_input_intermolecular_check.deselect()
         self._intermolecular_cb()
         
         return atoms
