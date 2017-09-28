@@ -60,6 +60,21 @@ class NCIPlotDialog(PlumeBaseDialog):
         # GUI init
         self.title = 'Plume NCIPlot'
         self._mouse_report_binding = None
+
+        # Variables
+        self.var_input_intermolecular_enabled = tk.IntVar()
+        self.var_input_intermolecular = tk.IntVar()
+        self.var_input_intermolecular.set(95)
+        self.var_input_summary = tk.StringVar()
+        self.var_input_summary.set('Please select your input.')
+        self.var_input_choice = tk.StringVar()
+        self.var_input_choice.set('molecules')
+        self.var_settings_isovalue_1 = tk.StringVar()
+        self.var_settings_isovalue_1.set('')
+        self.var_settings_isovalue_2 = tk.StringVar()
+        self.var_settings_isovalue_2.set('')
+        self.var_settings_report = tk.IntVar()
+        self.var_reported_value = tk.StringVar()
         # Fire up
         super(NCIPlotDialog, self).__init__(self, *args, **kwargs)
 
@@ -76,8 +91,6 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_input_frame.columnconfigure(0, weight=1)
         self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
         self.ui_input_choice_frame.grid(row=0)
-        self.var_input_choice = tk.StringVar()
-        self.var_input_choice.set('molecules')
         self.ui_input_choice_molecules = tk.Radiobutton(self.ui_input_choice_frame, 
                 variable=self.var_input_choice, text='Molecules', value='molecules',
                 command=self._input_choice_cb)
@@ -107,21 +120,16 @@ class NCIPlotDialog(PlumeBaseDialog):
         # More options
         self.ui_input_intermolecular_frame = tk.Frame(self.ui_input_frame)
         self.ui_input_intermolecular_frame.grid(row=2)
-        self.var_input_intermolecular_enabled = tk.IntVar()
         self.ui_input_intermolecular_check = tk.Checkbutton(
                 self.ui_input_intermolecular_frame, text='Filter out % of intramolecular',
                 variable=self.var_input_intermolecular_enabled,
                 command=self._intermolecular_cb, state='disabled')
         self.ui_input_intermolecular_check.pack(side='left')
-        self.var_input_intermolecular = tk.IntVar()
-        self.var_input_intermolecular.set(95)
         self.ui_input_intermolecular_field = tk.Entry(self.ui_input_intermolecular_frame,
                 textvariable=self.var_input_intermolecular, state='disabled', width=3)
         self.ui_input_intermolecular_field.pack(side='left')
 
         # Review input data
-        self.var_input_summary = tk.StringVar()
-        self.var_input_summary.set('Please select your input.')
         self.ui_input_summary_label = tk.Label(self.ui_input_frame, 
                 textvariable=self.var_input_summary)
         self.ui_input_summary_label.grid(row=3)
@@ -140,10 +148,6 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_levels_lbl = tk.Label(self.ui_settings_frame, 
                 text='Levels: ')
         self.ui_levels_lbl.grid(row=0, column=0)
-        self.var_settings_isovalue_1 = tk.StringVar()
-        self.var_settings_isovalue_1.set('')
-        self.var_settings_isovalue_2 = tk.StringVar()
-        self.var_settings_isovalue_2.set('')
         self.ui_settings_isovalue_1 = tk.Entry(self.ui_settings_frame,
                 textvariable=self.var_settings_isovalue_1,
                 width=10)
@@ -162,12 +166,10 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_settings_color_palette.grid(row=1, column=0, columnspan=3, 
                 sticky='we')
 
-        self.var_settings_report = tk.IntVar()
         self.ui_report_btn = tk.Checkbutton(self.ui_settings_frame, 
             text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor',
             command=self._report_values_cb, variable=self.var_settings_report)
         self.ui_report_btn.grid(row=2, column=0, columnspan=3)
-        self.var_reported_value = tk.StringVar()
         self.ui_reported_value = tk.Entry(self.ui_settings_frame, 
             textvariable=self.var_reported_value, state='readonly', 
             width=8)
@@ -376,30 +378,34 @@ class NCIPlotConfigureDialog(PlumeBaseDialog):
             dat = ''
         self.binary.set(binary)
         self.dat_dir.set(dat)
-        super(NCIPlotConfigureDialog, self).__init__(self, *args, **kwargs)
-
-    def fill_in_ui(self, parent):
-        label_0 = tk.Label(parent, text='NCIPlot program')
-        label_1 = tk.Label(parent, text='NCIPlot dat path')
-
-        self.bin_entry = tk.Entry(parent, textvariable=self.binary)
-        self.bin_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.binary, mode='filename', title='Select NCIPlot binary'))
-
-        self.dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
-        self.dat_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.dat_dir, mode='directory', title='Select NCIPlot dat directory'))
-
         self.text = tk.StringVar()
         self.text.set("Tip: Click <Help> to get NCIPlot")
-        self.label = tk.Label(parent, textvariable=self.text)
-        self.label.grid(row=2, columnspan=3)
 
-        grid = [[label_0, self.bin_entry, self.bin_browse],
-                [label_1, self.dat_entry, self.dat_browse]]
-        for i, row in enumerate(grid):
-            for j, widget in enumerate(row):
-                widget.grid(row=i, column=j, padx=2, pady=2)
+        super(NCIPlotConfigureDialog, self).__init__(self, resizable=False,
+                                                     *args, **kwargs)
+
+    def fill_in_ui(self, parent):
+        self.ui_label_0 = tk.Label(parent, text='NCIPlot program')
+        self.ui_label_1 = tk.Label(parent, text='NCIPlot dat path')
+
+        self.ui_bin_entry = tk.Entry(parent, textvariable=self.binary)
+        self.ui_bin_browse = tk.Button(parent, text='...',
+            command=lambda: self._browse_cb(self.binary, 
+                                            mode='filename',
+                                            title='Select NCIPlot binary'))
+
+        self.ui_dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
+        self.ui_dat_browse = tk.Button(parent, text='...',
+            command=lambda: self._browse_cb(self.dat_dir, 
+                                            mode='directory', 
+                                            title='Select NCIPlot dat directory'))
+
+        self.ui_label = tk.Label(parent, textvariable=self.text)
+        self.ui_label.grid(row=2, columnspan=3)
+
+        grid = [[self.ui_label_0, self.ui_bin_entry, self.ui_bin_browse],
+                [self.ui_label_1, self.ui_dat_entry, self.ui_dat_browse]]
+        self.auto_grid(grid)
 
 
     def OK(self):
