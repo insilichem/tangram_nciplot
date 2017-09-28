@@ -27,11 +27,7 @@ contain the Controller and the Model. Read on MVC design if you don't know about
 
 class Controller(object):
 
-    """
-    The controller manages the communication between the UI (graphic interface)
-    and the data model. Actions such as clicks on buttons, enabling certain areas, 
-    or running external programs, are the responsibility of the controller.
-    """
+    _model_id = [100]
 
     def __init__(self, gui=None, nciplot_binary=None, nciplot_dat=None, *args, **kwargs):
         self.gui = gui
@@ -75,9 +71,12 @@ class Controller(object):
         except KeyError:
             raise UserError('NCIPlot has not been run yet!')
         else:
-            gradient = open_volume_file(grad_file, show_dialog=False)[0]
-            density = open_volume_file(dens_file, show_dialog=False)[0]
+            gradient = open_volume_file(grad_file, show_dialog=False,
+                    model_id=(self._model_id[0], 1))[0]
+            density = open_volume_file(dens_file, show_dialog=False,
+                    model_id=(self._model_id[0], 2))[0]
             density.display = False
+            self._model_id[0] += 1
         return gradient, density
 
     def colorize_by_color(self, color, surface=None):
