@@ -405,7 +405,7 @@ class NCIPlotConfigureDialog(PlumeBaseDialog):
 
         grid = [[self.ui_label_0, self.ui_bin_entry, self.ui_bin_browse],
                 [self.ui_label_1, self.ui_dat_entry, self.ui_dat_browse]]
-        self.auto_grid(grid)
+        self.auto_grid(parent, grid)
 
 
     def OK(self):
