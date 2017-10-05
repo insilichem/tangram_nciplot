@@ -22,7 +22,7 @@ matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 # Own
-from plumesuite.ui import PlumeBaseDialog
+from libplume.ui import PlumeBaseDialog
 from core import Controller, standard_color_palettes
 import prefs
 
