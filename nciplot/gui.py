@@ -64,7 +64,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.var_reported_value = tk.StringVar()
         
         # Fire up
-        super(NCIPlotDialog, self).__init__(self, *args, **kwargs)
+        super(NCIPlotDialog, self).__init__(*args, **kwargs)
 
 
     def fill_in_ui(self, parent):
@@ -362,7 +362,7 @@ class NCIPlotConfigureDialog(PlumeBaseDialog):
         self.text = tk.StringVar()
         self.text.set("Tip: Click <Help> to get NCIPlot")
 
-        super(NCIPlotConfigureDialog, self).__init__(self, resizable=False,
+        super(NCIPlotConfigureDialog, self).__init__(resizable=False,
                                                      *args, **kwargs)
 
     def fill_in_ui(self, parent):
