@@ -28,13 +28,11 @@ import prefs
 
 
 ui = None
-def showUI(callback=None):
+def showUI():
     global ui
     if not ui:
         ui = NCIPlotDialog()
     ui.enter()
-    if callback:
-        ui.addCallback(callback)
 
 
 class NCIPlotDialog(PlumeBaseDialog):
@@ -62,7 +60,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.var_settings_isovalue_2.set('')
         self.var_settings_report = tk.IntVar()
         self.var_reported_value = tk.StringVar()
-        
+
         # Fire up
         super(NCIPlotDialog, self).__init__(*args, **kwargs)
 
@@ -74,10 +72,10 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_input_frame.columnconfigure(0, weight=1)
         self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
         self.ui_input_choice_frame.grid(row=0, sticky='we')
-        self.ui_input_choice_molecules = tk.Radiobutton(self.ui_input_choice_frame, 
+        self.ui_input_choice_molecules = tk.Radiobutton(self.ui_input_choice_frame,
                 variable=self.var_input_choice, text='Molecules', value='molecules',
                 command=self._input_choice_cb)
-        self.ui_input_choice_selection = tk.Radiobutton(self.ui_input_choice_frame, 
+        self.ui_input_choice_selection = tk.Radiobutton(self.ui_input_choice_frame,
                 variable=self.var_input_choice, text='Selection', value='selection',
                 command=self._input_choice_cb)
         self.ui_input_choice_molecules.pack(side='left')
@@ -95,7 +93,7 @@ class NCIPlotDialog(PlumeBaseDialog):
 
         # Mode B: Current selection
         items = ['Current selection'] + sorted(chimera.selection.savedSels.keys())
-        self.ui_input_named_selections = OptionMenu(self.ui_input_molecules_frame, 
+        self.ui_input_named_selections = OptionMenu(self.ui_input_molecules_frame,
                 command=None, items=items)
         self.input_new_named_atom_selection = None  # Text field + 'Create button'
 
@@ -112,7 +110,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_input_intermolecular_field.pack(side='left')
 
         # Review input data
-        self.ui_input_summary_label = tk.Label(self.ui_input_frame, 
+        self.ui_input_summary_label = tk.Label(self.ui_input_frame,
                 textvariable=self.var_input_summary)
         self.ui_input_summary_label.grid(row=3)
 
@@ -125,40 +123,40 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_config_btn.pack(side='left')
 
         # Configure Volume Viewer
-        self.ui_settings_frame = tk.LabelFrame(self.canvas, 
+        self.ui_settings_frame = tk.LabelFrame(self.canvas,
                 text='Customize display', padx=5, pady=5)
-        self.ui_levels_lbl = tk.Label(self.ui_settings_frame, 
+        self.ui_levels_lbl = tk.Label(self.ui_settings_frame,
                 text='Levels: ')
         self.ui_levels_lbl.grid(row=0, column=0)
         self.ui_settings_isovalue_1 = tk.Entry(self.ui_settings_frame,
                 textvariable=self.var_settings_isovalue_1,
                 width=10)
         self.ui_settings_isovalue_1.grid(row=0, column=1, sticky='ew')
-        self.ui_settings_isovalue_2 = tk.Entry(self.ui_settings_frame, 
+        self.ui_settings_isovalue_2 = tk.Entry(self.ui_settings_frame,
                 textvariable=self.var_settings_isovalue_2,
                 width=10)
         self.ui_settings_isovalue_2.grid(row=0, column=2, sticky='ew')
-        self.ui_settings_update_btn = tk.Button(self.ui_settings_frame, 
+        self.ui_settings_update_btn = tk.Button(self.ui_settings_frame,
                 text='Update', command=self._update_surface)
         self.ui_settings_update_btn.grid(row=0, column=3, rowspan=2, sticky='news')
 
-        self.ui_settings_color_palette = OptionMenu(self.ui_settings_frame, 
+        self.ui_settings_color_palette = OptionMenu(self.ui_settings_frame,
                 initialitem=3, label_text='Colors: ', labelpos='w',
                 items=sorted(standard_color_palettes.keys()))
-        self.ui_settings_color_palette.grid(row=1, column=0, columnspan=3, 
+        self.ui_settings_color_palette.grid(row=1, column=0, columnspan=3,
                 sticky='we')
 
-        self.ui_report_btn = tk.Checkbutton(self.ui_settings_frame, 
+        self.ui_report_btn = tk.Checkbutton(self.ui_settings_frame,
             text=u'Report \u03BB\u2082\u22C5\u03C1\u22C5100 value at cursor',
             command=self._report_values_cb, variable=self.var_settings_report)
         self.ui_report_btn.grid(row=2, column=0, columnspan=3)
-        self.ui_reported_value = tk.Entry(self.ui_settings_frame, 
-            textvariable=self.var_reported_value, state='readonly', 
+        self.ui_reported_value = tk.Entry(self.ui_settings_frame,
+            textvariable=self.var_reported_value, state='readonly',
             width=8)
         self.ui_reported_value.grid(row=2, column=3, sticky='we')
 
         # Plot figure
-        self.ui_plot_frame = tk.LabelFrame(self.canvas, 
+        self.ui_plot_frame = tk.LabelFrame(self.canvas,
                 text=u'Plot RDG vs density (\u03BB\u2082\u22C5\u03C1)',
                 padx=5, pady=5)
         self.ui_plot_button = tk.Button(self.ui_plot_frame, text='Plot', command=self._plot)
@@ -168,7 +166,7 @@ class NCIPlotDialog(PlumeBaseDialog):
 
         self.ui_plot_widget_frame = tk.Frame(self.ui_plot_frame)
         self.ui_plot_widget_frame.grid(row=1)
-        self.ui_plot_widget = FigureCanvasTkAgg(self.ui_plot_figure, 
+        self.ui_plot_widget = FigureCanvasTkAgg(self.ui_plot_figure,
                                                 master=self.ui_plot_widget_frame)
         # self.plot_cursor = Cursor(self.plot_subplot, useblit=True, color='black', linewidth=1)
         # self.plot_figure.canvas.mpl_connect('button_press_event', self._on_plot_click)
@@ -230,7 +228,7 @@ class NCIPlotDialog(PlumeBaseDialog):
             self.controller.run(groups=groups, **options)
             self.nciplot_run.configure(state='disabled', text='Running...')
             self.ui_settings_frame.pack_forget()
-    
+
     def Close(self):  # Singleton mode
         global ui
         ui = None
@@ -341,7 +339,7 @@ class NCIPlotDialog(PlumeBaseDialog):
             self.ui_input_intermolecular_check.config(state='disabled')
             self.ui_input_intermolecular_check.deselect()
         self._intermolecular_cb()
-        
+
         return atoms
 
 
@@ -371,14 +369,14 @@ class NCIPlotConfigureDialog(PlumeBaseDialog):
 
         self.ui_bin_entry = tk.Entry(parent, textvariable=self.binary)
         self.ui_bin_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.binary, 
+            command=lambda: self._browse_cb(self.binary,
                                             mode='filename',
                                             title='Select NCIPlot binary'))
 
         self.ui_dat_entry = tk.Entry(parent, textvariable=self.dat_dir)
         self.ui_dat_browse = tk.Button(parent, text='...',
-            command=lambda: self._browse_cb(self.dat_dir, 
-                                            mode='directory', 
+            command=lambda: self._browse_cb(self.dat_dir,
+                                            mode='directory',
                                             title='Select NCIPlot dat directory'))
 
         self.ui_label = tk.Label(parent, textvariable=self.text)
@@ -403,7 +401,7 @@ class NCIPlotConfigureDialog(PlumeBaseDialog):
 
     def _browse_cb(self, var=None, mode='filename', **options):
         # result = OpenModal(**options).run(chimera.tkgui.app)
-        
+
         functions = {'filename': tkFileDialog.askopenfilename,
                      'directory': tkFileDialog.askdirectory}
         result = functions[mode](parent=self.canvas, **options)
