@@ -8,6 +8,9 @@ import Tkinter as tk
 import tkFileDialog
 from itertools import groupby
 from operator import attrgetter
+import os
+import json
+import shutil
 # Chimera stuff
 import chimera
 from chimera.baseDialog import ModelessDialog, ModalDialog
@@ -38,7 +41,7 @@ def showUI():
 class NCIPlotDialog(PlumeBaseDialog):
 
 
-    buttons = ('Run', 'Close')
+    buttons = ('Run', 'Save', 'Load', 'Close')
     configure_dialog = None
 
     def __init__(self, *args, **kwargs):
@@ -174,6 +177,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         # Register and map triggers, callbacks...
         chimera.triggers.addHandler('selection changed', self._on_selection_changed, None)
         self.nciplot_run = self.buttonWidgets['Run']
+        self.buttonWidgets['Save']['state'] = 'disabled'
 
     def load_controller(self):
         binary, dat = prefs.get_preferences()
@@ -213,7 +217,6 @@ class NCIPlotDialog(PlumeBaseDialog):
             self.configure_dialog = NCIPlotConfigureDialog(self)
         self.configure_dialog.enter()
 
-
     def Run(self, *args):
         """
         Called at clicking 'Run' button.
@@ -229,6 +232,45 @@ class NCIPlotDialog(PlumeBaseDialog):
             self.nciplot_run.configure(state='disabled', text='Running...')
             self.ui_settings_frame.pack_forget()
 
+    def Save(self, *args):
+        try:
+            grad = self.controller.data['grad_cube']
+            dens = self.controller.data['dens_cube']
+            xy = self.controller.data['xy_data']
+        except KeyError:
+            raise chimera.UserError("NCIPlot has not run yet!")
+        path = tkFileDialog.asksaveasfilename(title='Choose destination (.cube)',
+                                              filetypes=[('Gaussian cube', '*.cube'),
+                                                         ('All', '*')],
+                                              defaultextension='.cube')
+        if not path:
+            return
+        data = self.controller.data.copy()
+        basename, ext = os.path.splitext(path)
+        data['grad_cube'] = newgradpath = '{fn}.grad{ext}'.format(fn=basename, ext=ext)
+        shutil.copyfile(grad, newgradpath)
+        data['dens_cube'] = newdenspath = '{fn}.dens{ext}'.format(fn=basename, ext=ext)
+        shutil.copyfile(dens, newdenspath)
+        data['xy_data'] = newdatpath = '{fn}.dat'.format(fn=basename, ext=ext)
+        shutil.copyfile(xy, newdatpath)
+        with open('{}.json'.format(basename), 'w') as f:
+            json.dump(data, f)
+        self.status('Saved at {}!'.format(os.path.dirname(path)), color='blue',
+                    blankAfter=4)
+
+    def Load(self, *args):
+        path = tkFileDialog.askopenfilename(title='Choose state file (*.json)',
+                                            filetypes=[('JSON file', '*.json'),
+                                                       ('All', '*')])
+        if not path:
+            return
+        with open(path) as f:
+            data = json.load(f)
+        self._run_nciplot_clear_cb()
+        self.controller = self.load_controller()
+        self.controller._after_cb(data)
+        self._run_nciplot_cb()
+
     def Close(self):  # Singleton mode
         global ui
         ui = None
@@ -243,6 +285,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.var_settings_isovalue_2.set(self.controller.surface.surface_levels[1])
         self.ui_settings_frame.pack()
         self.ui_plot_frame.pack(expand=True, fill='both')
+        self.buttonWidgets['Save']['state'] = 'normal'
 
     def _run_nciplot_clear_cb(self):
         """
@@ -256,6 +299,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.ui_plot_frame.pack_forget()
         self.ui_plot_widget.get_tk_widget().pack_forget()
         self.controller = None
+        self.buttonWidgets['Save']['state'] = 'disabled'
 
     def _update_surface(self):
         """
@@ -330,7 +374,6 @@ class NCIPlotDialog(PlumeBaseDialog):
         self.nciplot_run.configure(state=state)
         self.ui_input_summary_label.configure(foreground=color)
         self.var_input_summary.set('{} selected atoms'.format(len(atoms)))
-
 
         if len(molecules) > 1:
             self.ui_input_intermolecular_check.config(state='normal')
