@@ -43,6 +43,10 @@ class NCIPlotDialog(PlumeBaseDialog):
 
     buttons = ('Run', 'Save', 'Load', 'Close')
     configure_dialog = None
+    help = "https://github.com/insilichem/plume_nciplot"
+    VERSION = '0.0.1'
+    VERSION_URL = "https://api.github.com/repos/insilichem/plume_nciplot/releases/latest"
+
 
     def __init__(self, *args, **kwargs):
         # GUI init
