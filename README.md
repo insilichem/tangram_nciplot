@@ -1,4 +1,4 @@
-# Plume NCIPlot GUI
+# Tangram NCIPlot GUI
 
 NCIPlot GUI is a graphical frontend for UCSF Chimera. It runs NCIPlot behind the scenes to depict non covalent interaction blobs of the selected molecules. It also supports a CUDA GPU implementation, cuNCI.
 
@@ -7,10 +7,10 @@ NCIPlot GUI is a graphical frontend for UCSF Chimera. It runs NCIPlot behind the
 `NCIPlot` is GPL software developed by Alberto Otero de la Roza,
 Julia Conteras-Garcia, Erin R. Johnson, and Weitao Yang. Make sure to check their [GitHub](https://github.com/aoterodelaroza/nciplot).
 
-`cuNCI` is developed by Gaëtan Rubez, Jean-Matthieu Etancelin, Xavier Vigouroux, Michael Krajecki, Jean-Charles Boisson, and Eric Hénon, and published in [JCC](http://onlinelibrary.wiley.com/doi/10.1002/jcc.24786/full). 
+`cuNCI` is developed by Gaëtan Rubez, Jean-Matthieu Etancelin, Xavier Vigouroux, Michael Krajecki, Jean-Charles Boisson, and Eric Hénon, and published in [JCC](http://onlinelibrary.wiley.com/doi/10.1002/jcc.24786/full).
 
 # Dependencies
-You need to download NCIPlot from [here](https://github.com/aoterodelaroza/nciplot) and configure Plume NCIPlot so it can find the location where you extracted the files.
+You need to download NCIPlot from [here](https://github.com/aoterodelaroza/nciplot) and configure Tangram NCIPlot so it can find the location where you extracted the files.
 
 We also provide [Anaconda](https://www.continuum.io/) [binaries](https://anaconda.org/InsiliChem) so you can install them easily with these commands:
 

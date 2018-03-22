@@ -28,8 +28,8 @@ def assert_preferences():
         dat = ''
         if 'NCIPLOT_HOME' in os.environ:
             dat = os.path.join(os.environ['NCIPLOT_HOME'], 'dat')
-        preferences.set('plume_nciplot', 'nciplot_bin', binary)
-        preferences.set('plume_nciplot', 'nciplot_dat', dat)
+        preferences.set('tangram_nciplot', 'nciplot_bin', binary)
+        preferences.set('tangram_nciplot', 'nciplot_dat', dat)
         preferences.save()
     return binary, dat
 
@@ -37,16 +37,16 @@ def assert_preferences():
 def set_preferences(binary, dat):
     assert_preferences()
     if os.path.isfile(binary) and os.path.isdir(dat):
-        preferences.set('plume_nciplot', 'nciplot_bin', binary)
-        preferences.set('plume_nciplot', 'nciplot_dat', dat)
+        preferences.set('tangram_nciplot', 'nciplot_bin', binary)
+        preferences.set('tangram_nciplot', 'nciplot_dat', dat)
         preferences.save()
     else:
         raise ValueError('One or more of the specified paths do not exist.')
 
 
 def get_preferences():
-    return preferences.get('plume_nciplot', 'nciplot_bin'), \
-           preferences.get('plume_nciplot', 'nciplot_dat')
+    return preferences.get('tangram_nciplot', 'nciplot_bin'), \
+           preferences.get('tangram_nciplot', 'nciplot_dat')
 
 
 def test_preferences():
@@ -54,5 +54,5 @@ def test_preferences():
     return os.path.isfile(binary) and os.path.isdir(dat)
 
 
-preferences.addCategory('plume_nciplot', preferences.HiddenCategory)
+preferences.addCategory('tangram_nciplot', preferences.HiddenCategory)
 assert_preferences()

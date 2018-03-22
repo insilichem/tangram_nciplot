@@ -25,7 +25,7 @@ matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 # Own
-from libplume.ui import PlumeBaseDialog
+from libtangram.ui import TangramBaseDialog
 from core import Controller, standard_color_palettes
 import prefs
 
@@ -38,19 +38,19 @@ def showUI():
     ui.enter()
 
 
-class NCIPlotDialog(PlumeBaseDialog):
+class NCIPlotDialog(TangramBaseDialog):
 
 
     buttons = ('Run', 'Save', 'Load', 'Close')
     configure_dialog = None
-    help = "https://github.com/insilichem/plume_nciplot"
+    help = "https://github.com/insilichem/tangram_nciplot"
     VERSION = '0.0.1'
-    VERSION_URL = "https://api.github.com/repos/insilichem/plume_nciplot/releases/latest"
+    VERSION_URL = "https://api.github.com/repos/insilichem/tangram_nciplot/releases/latest"
 
 
     def __init__(self, *args, **kwargs):
         # GUI init
-        self.title = 'Plume NCIPlot'
+        self.title = 'Tangram NCIPlot'
         self._mouse_report_binding = None
 
         # Variables
@@ -390,7 +390,7 @@ class NCIPlotDialog(PlumeBaseDialog):
         return atoms
 
 
-class NCIPlotConfigureDialog(PlumeBaseDialog):
+class NCIPlotConfigureDialog(TangramBaseDialog):
 
     buttons = ('OK', 'Close')
 

@@ -20,9 +20,9 @@ def read(*filenames, **kwargs):
 long_description = read('README.md')
 
 setup(
-    name='plume_nciplot',
+    name='tangram_nciplot',
     version='0.0.1',
-    url='https://github.com/insilichem/plume_nciplot',
+    url='https://github.com/insilichem/tangram_nciplot',
     author='Jaime Rodríguez-Guerra',
     author_email='jaime.rogue@gmail.com',
     description=long_description,

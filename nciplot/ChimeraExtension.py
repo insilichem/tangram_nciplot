@@ -2,14 +2,14 @@
 # encoding: utf-8
 
 
-from __future__ import print_function, division 
+from __future__ import print_function, division
 import chimera.extension
 
 
 class NCIPlotExtension(chimera.extension.EMO):
 
     def name(self):
-        return 'Plume NCIPlot'
+        return 'Tangram NCIPlot'
 
     def description(self):
         return "Depict orbitals and QM interaction blobs with NCIPlot"
