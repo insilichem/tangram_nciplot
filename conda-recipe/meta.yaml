@@ -1,0 +1,38 @@
+{% set name = "tangram_nciplot" %}
+
+
+package:
+  name: {{ name|lower }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'v')[1:] }}
+
+source:
+  url: ../
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps -vv"
+
+requirements:
+  host:
+    - python
+  run:
+    - python
+    - pychimera     >=0.2.6
+    - libtangram
+    - nciplot
+    - cunci
+
+about:
+  home: http://github.com/insilichem/tangram_nciplot
+  license: MIT
+  license_family: MIT
+
+  summary: 'UCSF Chimera extension to explore and analyze GaudiMM & GOLD solutions'
+
+  description: |
+    Light interface to explore, view and analyze solutions from GaudiMM
+    and GOLD, inside UCSF Chimera.
+  doc_url: http://tangram-suite.readthedocs.io/en/latest/tangram_nciplot.html
+  dev_url: https://github.com/insilichem/tangram_nciplot
+
+
