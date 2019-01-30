@@ -9,7 +9,7 @@ source:
   path: ../
 
 build:
-  number: 0
+  number: 1
   script: "{{ PYTHON }} -m pip install . --no-deps -vv"
 
 requirements:
@@ -20,7 +20,7 @@ requirements:
     - pychimera     >=0.2.6
     - libtangram
     - nciplot
-    - cunci
+    - cunci         # [linux]
 
 about:
   home: http://github.com/insilichem/tangram_nciplot
