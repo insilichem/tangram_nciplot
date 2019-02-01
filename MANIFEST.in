@@ -1,0 +1,2 @@
+include versioneer.py
+include nciplot/_version.py
