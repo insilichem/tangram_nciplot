@@ -218,7 +218,7 @@ class NCIPlotDialog(TangramBaseDialog):
 
     def _configure_dialog(self, *args):
         if self.configure_dialog is None:
-            self.configure_dialog = NCIPlotConfigureDialog(self)
+            self.configure_dialog = NCIPlotConfigureDialog(self.canvas)
         self.configure_dialog.enter()
 
     def Run(self, *args):
